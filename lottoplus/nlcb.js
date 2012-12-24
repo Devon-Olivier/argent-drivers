@@ -8,11 +8,15 @@
  ***********************************************************/
 //TODO give these names that would make them easily distinguishable
 //as globals
+//native modules
 var http = require('http');
-var moment = require('moment');
 var querystring = require('querystring');
-var jsdom = require('jsdom');
 
+//external modules
+var jsdom = require('jsdom');
+var moment = require('moment');
+
+//local modules
 var ERROR = require('../lib/errors.js');
 var secretaryMaker = require('../lib/secretary.js');
 var devonUtil = require('../lib/utils.js');
@@ -80,6 +84,7 @@ exports.createDriver = function createDriver(driverOptions){
 
     var postData = querystring.stringify(nlcbDate);
     //TODO should come from settings file like mongo adapter
+    //OR should it?
     var options = {
       host: 'www.nlcb.co.tt',
       port: 80,

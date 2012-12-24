@@ -9,11 +9,15 @@
 'use strict'
 //TODO give these names that would make them easily distinguishable
 //as globals
-var mongoskin = require('mongoskin');
+//native modules
 var http = require('http');
 var events = require('events');
-var moment = require('moment');
 
+//external modules
+var moment = require('moment');
+var mongoskin = require('mongoskin');
+
+//local modules
 var secretaryMaker = require('../lib/secretary.js');
 var devonUtil = require('../lib/utils.js');
 var ERROR = require('../lib/errors.js');
