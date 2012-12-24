@@ -103,4 +103,4 @@ NLCBDRIVER.getDrawNumberRange(range, function(error, draws){
   draws.forEach(console.log);
 });
 ```
-## drivers/lottoplus/mongo.js
+#### `.lottoplus.mongo`
