@@ -317,6 +317,8 @@ exports.createDriver = function createDriver(driverOptions){
   return _adapter; 
 }; 
 
+//TODO make this available to clients 
+//as an external library maybe?
 var _parseDrawHtml = function _parseDrawHtml(html, parseCallback){
   //We are receiving bad html which fails when wrapped 
   //by $ so we take out the table fragment and proceed
