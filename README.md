@@ -4,9 +4,6 @@ Drivers to lottoplus database stores.
 
 ###Install dependencies
 
-There is currently a bug in contextify which is a dependency of jsdom installation
-of dependencies of argent-drivers fail because if it. Working on a solution.
-
   `npm install` in the root of the repository installs the dependencies.
 
 ###Usage
