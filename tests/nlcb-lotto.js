@@ -1,7 +1,7 @@
-DRIVERS = require('../argent-drivers.js');
+var DRIVERS = require('../argent-drivers.js');
 console.log(DRIVERS);
 
-lottoplusNlcbDriver = DRIVERS.lottoplus.nlcb.createDriver();
+var lottoplusNlcbDriver = DRIVERS.lottoplus.nlcb.createDriver();
 console.log(lottoplusNlcbDriver);
 lottoplusNlcbDriver.getDrawNumberRange({start:1, end:2}, function drawNumberRangeCallback(error, draws){
   if(error !== null){
