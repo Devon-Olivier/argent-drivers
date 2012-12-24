@@ -14,9 +14,9 @@ var http = require('http');
 var events = require('events');
 var moment = require('moment');
 
-var secretaryMaker = require('../../lib/secretary.js');
-var devonUtil = require('../../lib/utils.js');
-var ERROR = require('../../lib/errors.js');
+var secretaryMaker = require('../lib/secretary.js');
+var devonUtil = require('../lib/utils.js');
+var ERROR = require('../lib/errors.js');
 
 /************************************************************
  * TODO fix docs

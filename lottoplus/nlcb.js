@@ -13,9 +13,9 @@ var moment = require('moment');
 var querystring = require('querystring');
 var jsdom = require('jsdom');
 
-var ERROR = require('../../lib/errors.js');
-var secretaryMaker = require('../../lib/secretary.js');
-var devonUtil = require('../../lib/utils.js');
+var ERROR = require('../lib/errors.js');
+var secretaryMaker = require('../lib/secretary.js');
+var devonUtil = require('../lib/utils.js');
 
 /************************************************************
  * TODO fix documentation
