@@ -1,0 +1,27 @@
+{
+  "name": "argent-drivers",
+  "version": "0.0.0",
+  "description": "Drivers to lottoplus database stores.",
+  "main": "argent-drivers.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Devon-Olivier/argent-drivers.git"
+  },
+  "keywords": [
+    "lottoplus",
+    "nlcb",
+    "scraper",
+    "draws",
+    "playwhe",
+    "trinidad",
+    "tobago",
+    "devon",
+    "olivier"
+  ],
+  "author": "Devon Olivier",
+  "license": "BSD",
+  "readmeFilename": "README.md"
+}
