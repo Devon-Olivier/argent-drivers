@@ -47,7 +47,7 @@ Moment represents the start boundary of the date range and the
 is null if no error occured, and an array containing the 
 draws with dates in range that could have been retrieved.
 
-The following prints all draws in december 2012.
+The following prints all draws in December 2012.
 ```js
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
