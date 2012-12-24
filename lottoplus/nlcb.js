@@ -334,7 +334,7 @@ var _parseDrawHtml = function _parseDrawHtml(html, parseCallback){
   else {
     tableHtml = html.substring(tableStartMatch.index, tableEndMatch.index + tableEndMatch[0].length);
     jsdom.env(tableHtml, 
-        ['../../lib/jquery.js'],//it turns out that using a local copy is faster
+        ['../lib/jquery.js'],//it turns out that using a local copy is faster
         function(errors, window){
           //TODO handle errors
           var $ = window.$;
