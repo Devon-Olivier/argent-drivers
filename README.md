@@ -17,7 +17,7 @@ var lottoplusDrivers = require('argent-drivers').lottoplus;
 ```
 We are expecting to have others such as playwhe and cashpot.
 
-#### .lottoplus.nlcb
+#### `.lottoplus.nlcb`
 Scrapes nlcb.co.tt for lottoplus draws.
 
 Get a scraper:
