@@ -60,7 +60,9 @@ nlcbLottoplusDriver.getDrawDateRange(range, function(error, draws){
     console.log(error);
     return;
   }
-  draws.forEach(console.log);
+  draws.forEach(function(draw){
+    console.log(draw);
+  });
 });
 ```
 #### `.getDrawNumberRange(range, drawNumberRangeCallback)`
@@ -97,7 +99,9 @@ nlcbLottoplusDriver.getDrawNumberRange(range, function(error, draws){
     console.log(error);
     return;
   }
-  draws.forEach(console.log);
+  draws.forEach(function(draw){
+    console.log(draw);
+  });
 });
 ```
 #### `.lottoplus.mongo`
