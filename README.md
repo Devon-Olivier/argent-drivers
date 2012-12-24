@@ -58,7 +58,7 @@ var range = {
   end: MOMENT('2013 1 1', 'YYYY MM DD')
 };
 
-NLCBDRIVER.getDrawDateRange(range, function(error, draws){
+nlcbLottoplusDriver.getDrawDateRange(range, function(error, draws){
   if(error){
     console.log(error);
     return;
@@ -95,7 +95,7 @@ var range = {
   end: 11 
 };
 
-NLCBDRIVER.getDrawNumberRange(range, function(error, draws){
+nlcbLottoplusDriver.getDrawNumberRange(range, function(error, draws){
   if(error){
     console.log(error);
     return;
