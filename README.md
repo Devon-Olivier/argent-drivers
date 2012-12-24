@@ -4,48 +4,27 @@ Drivers to lottoplus database stores.
 
 The project as several parts. The following section lists each part, its purpose and the files and tools needed to make use of it.
 
-###depends on
+###install dependencies
 
-* [node.js](http://nodejs.org)
+There is currently a bug in contextify which is a dependency of jsdom installation
+of dependencies of argent-drivers fail because if it. Working on a solution.
 
-  It may be best to install nodejs using your distribution's package
-  manager on linux.
+  `npm install` in the root of the repository installs the dependencies.
 
-  On mac osx the best way seems to be to install using 
-  [macports](http://www.macports.org/)
-  or [homebrew](http://mxcl.github.com/homebrew/).
-
-  Windows users are lord over us all and aware of their download-double-click
-  syndrome so they know what to do.
-
-  To install on [arch linux](http://archlinux.org):
-
-  `pacman -Sy nodejs`
-  
-* [moment.js](http://momentjs.com)
-
-  Install using [npm](http://npmjs.org):
-
-  `npm install momentjs`
-* [jsdom.js](https://github.com/tmpvar/jsdom)
-  
-  Install using [npm](http://npmjs.org):
-
-  `npm install jsdom`
-
-  running `npm install` in the root of the repository installs the last two for you.
-
-#Les parties du projet
-
-Scrapes nlcb.co.tt for lottoplus draws.
 ###usage
 
-#### `.createDriver()`
+The lottoplus driver factories are in
+```js
+var lottoplusDrivers = require('argent-drivers').lottoplus;
+```
+We are expecting to have others such as playwhe and cashpot.
+
+#### .lottoplus.nlcb
+Scrapes nlcb.co.tt for lottoplus draws.
 
 Get a scraper:
-
 ```js
-var NLCBDRIVER = require('./drivers/lottoplus/nlcb.js').createDriver();
+var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
 ```
 ####Methods of the scraper
 
