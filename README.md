@@ -49,7 +49,8 @@ draws with dates in range that could have been retrieved.
 
 The following prints all draws in december 2012.
 ```js
-var NLCBDRIVER = require('./drivers/lottoplus/nlcb.js').createDriver();
+var lottoplusDrivers = require('argent-drivers').lottoplus;
+var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
 var MOMENT = require('moment');
 
 var range = {
@@ -86,7 +87,8 @@ draws with numbers in range that could have been retrieved.
 
 The following prints draws with numbers from 1 to 10 inclusive.
 ```js
-var NLCBDRIVER = require('./drivers/lottoplus/nlcb.js').createDriver();
+var lottoplusDrivers = require('argent-drivers').lottoplus;
+var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
 
 var range = {
   start: 1, 
