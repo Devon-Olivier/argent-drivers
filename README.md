@@ -145,7 +145,7 @@ draws with dates in range that could have been retrieved.
 The following prints all draws in December 2012.
 ```js
 var lottoplusDrivers = require('argent-drivers').lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver();
 var MOMENT = require('moment');
 
 var range = {
@@ -153,7 +153,7 @@ var range = {
   end: MOMENT('2013 1 1', 'YYYY MM DD')
 };
 
-nlcbLottoplusDriver.getDrawDateRange(range, function(error, draws){
+mongoLottoplusDriver.getDrawDateRange(range, function(error, draws){
   if(error){
     console.log(error);
     return;
@@ -185,14 +185,14 @@ draws with numbers in range that could have been retrieved.
 The following prints draws with numbers from 1 to 10 inclusive.
 ```js
 var lottoplusDrivers = require('argent-drivers').lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver();
 
 var range = {
   start: 1, 
   end: 11 
 };
 
-nlcbLottoplusDriver.getDrawNumberRange(range, function(error, draws){
+mongoLottoplusDriver.getDrawNumberRange(range, function(error, draws){
   if(error){
     console.log(error);
     return;
