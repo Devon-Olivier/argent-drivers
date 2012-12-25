@@ -23,15 +23,6 @@ var devonUtil = require('../lib/utils.js');
 
 /************************************************************
  * TODO fix documentation
- * storeDraws(draws, storeDrawsCallback) stores all the draws in draws in the
- * associated database.
- *
- * @param draws an array of draw objects.
- *
- * @param storeDrawsCallback is called with after the store is complete with
- * an error object, which is null if no errors occured during the attempted 
- * store.
- *
  * getDrawDateRange(range, drawDateRangeCallback) calls 
  * drawDateRangeCallback with the draws whose dates are 
  * within the range specified by 'range'. The draws passed on to 
