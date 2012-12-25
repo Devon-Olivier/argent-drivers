@@ -204,9 +204,9 @@ mongoLottoplusDriver.getDrawNumberRange(range, function(error, draws){
 ```
 #### `.storeDraws(draws, storeDrawsCallback)`
 
-Store the draws in `draws` in the `draws` collection of the lottoplus
-mongo database.
+Store the draws in the lottoplus mongo database.
 
 `storeDraws`(`draws`, `storeDrawsCallback`) calls `storeDrawsCallback` with
 no arguments after storing `draws` in the `draws` collection of the database.
 
+`draws` is an array of objects representing the draws.
