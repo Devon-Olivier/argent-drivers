@@ -187,6 +187,8 @@ mongoLottoplusDriver.getDrawDateRange(range, function(error, draws){
   draws.forEach(function(draw){
     console.log(draw);
   });
+  //close database c'est tres important
+  mongoLottoplusDriver.close(function(){});
 });
 ```
 #### `.getDrawNumberRange(range, drawNumberRangeCallback)`
@@ -227,6 +229,8 @@ mongoLottoplusDriver.getDrawNumberRange(range, function(error, draws){
   draws.forEach(function(draw){
     console.log(draw);
   });
+  //close database c'est tres important
+  mongoLottoplusDriver.close(function(){});
 });
 ```
 #### `.storeDraws(draws, storeDrawsCallback)`
@@ -237,3 +241,7 @@ Store the draws in the lottoplus mongo database.
 no arguments after storing `draws` in the `draws` collection of the database.
 
 `draws` is an array of objects representing the draws.
+
+#### `.close(closeCallback)`
+
+close database connection and call `closeCallback` with no arguments
