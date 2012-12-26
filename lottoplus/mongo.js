@@ -165,6 +165,7 @@ exports.createDriver = function createDriver(options){
     }
   };
 
+  //TODO handle errors
   _adapter.storeDraws = function(draws, storeDrawsCallback){
     var job = function(callback){
       _lottoplusDB.collection('draws').insert(draws, callback)
