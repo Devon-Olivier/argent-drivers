@@ -1,6 +1,6 @@
 {
   "name": "argent-drivers",
-  "version": "0.0.0",
+  "version": "0.0.2",
   "description": "Drivers to lottoplus database stores.",
   "main": "argent-drivers.js",
   "scripts": {
