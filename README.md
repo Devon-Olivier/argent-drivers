@@ -23,7 +23,11 @@ Drivers to lottoplus database stores.
   `pacman -Sy nodejs`
 
 ###Install argent-drivers
+  `argent-drivers` is in the npm repository. To install
+  
+  `npm install argent-drivers`
 
+  You can get `argent-drivers` from [github.com](https://www.github.com)
   `git clone https://github.com/Devon-Olivier/argent-drivers.git` to get `argent-drivers`
 
   `npm install` in the root of the repository installs the node modules 
