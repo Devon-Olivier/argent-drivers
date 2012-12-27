@@ -11,4 +11,4 @@ var lottoplus = {
 
 exports.lottoplus = lottoplus;
 exports.moment = moment;
-exoprts.errors = errors;
+exports.errors = errors;
