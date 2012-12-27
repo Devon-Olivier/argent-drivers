@@ -65,10 +65,9 @@ the start boundary of the range, and less than the end
 boundary of the range. i.e. all dates in \[`start`, `end`).
 
 `range` is an object with properties `start` and `end`.
-Each of these is an instance of Moment---see [moment.js docs]
-(http://momentjs.com/docs/). The `start` Moment represents the
-start boundary of the date range and the `end` Moment represents 
-the end boundary of the date range.
+Each of these is an instance of Moment---see [.moment](#moment).
+The `start` Moment represents the start boundary of the date range and 
+the `end` Moment represents the end boundary of the date range.
 
 `drawDateRangeCallback` is called with an error object, which
 is null if no error occured, and an array containing the 
@@ -79,11 +78,11 @@ The following prints all draws in December 2012.
 #! /usr/bin/env node
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
-var MOMENT = require('moment');
+var moment = argentDrivers.moment;
 
 var range = {
-  start: MOMENT('2012 12 1', 'YYYY MM DD'),
-  end: MOMENT('2013 1 1', 'YYYY MM DD')
+  start: moment('2012 12 1', 'YYYY MM DD'),
+  end: moment('2013 1 1', 'YYYY MM DD')
 };
 
 nlcbLottoplusDriver.getDrawDateRange(range, function(error, draws){
@@ -165,10 +164,9 @@ the start boundary of the range, and less than the end
 boundary of the range. i.e. all dates in \[`start`, `end`).
 
 `range` is an object with properties `start` and `end`.
-Each of these is an object is an instance of Moment--- 
-see [moment.js docs](http://momentjs.com/docs/). The `start` 
-Moment represents the start boundary of the date range and the 
-`end` Moment represents the end boundary of the date range.
+Each of these is an instance of Moment---see [.moment](#moment).
+The `start` Moment represents the start boundary of the date range and
+the `end` Moment represents the end boundary of the date range.
 
 `drawDateRangeCallback` is called with an error object, which
 is null if no error occured, and an array containing the 
@@ -179,11 +177,11 @@ The following prints all draws in December 2012.
 #! /usr/bin/env node
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver();
-var MOMENT = require('moment');
+var moment = require('moment');
 
 var range = {
-  start: MOMENT('2012 12 1', 'YYYY MM DD'),
-  end: MOMENT('2013 1 1', 'YYYY MM DD')
+  start: moment('2012 12 1', 'YYYY MM DD'),
+  end: moment('2013 1 1', 'YYYY MM DD')
 };
 
 mongoLottoplusDriver.getDrawDateRange(range, function(error, draws){
@@ -252,3 +250,10 @@ no arguments after storing `draws` in the `draws` collection of the database.
 #### `.close(closeCallback)`
 
 close database connection and call `closeCallback` with no arguments
+
+## .moment
+
+The moment factories are located in `require('argent-drivers').moment.
+
+See [moment.js docs] (http://momentjs.com/docs/) for information on how
+to construct and use moment objects.
