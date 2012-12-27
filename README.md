@@ -76,7 +76,8 @@ draws with dates in range that could have been retrieved.
 The following prints all draws in December 2012.
 ```js
 #! /usr/bin/env node
-var lottoplusDrivers = require('argent-drivers').lottoplus;
+var argentDrivers. require('argent-drivers');
+var lottoplusDrivers = argentDrivers.lottoplus;
 var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
 var moment = argentDrivers.moment;
 
@@ -175,9 +176,10 @@ draws with dates in range that could have been retrieved.
 The following prints all draws in December 2012.
 ```js
 #! /usr/bin/env node
+var argentDrivers. require('argent-drivers');
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver();
-var moment = require('moment');
+var moment = argentDrivers.moment;
 
 var range = {
   start: moment('2012 12 1', 'YYYY MM DD'),
