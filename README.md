@@ -259,3 +259,8 @@ The moment factories are located in `require('argent-drivers').moment`
 
 See [moment.js docs] (http://momentjs.com/docs/) for information on how
 to construct and use moment objects.
+
+## .errors
+
+The errors passed to callbacks shall be of one of these found in
+`require('argent-drivers').errors`.
