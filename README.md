@@ -9,16 +9,16 @@ Drivers to lottoplus database stores.
 * [node.js](http://nodejs.org)
 
   It may be best to install nodejs using your distribution's package
-  manager on linux.
+  manager on **linux**.
 
-  On mac osx the best way seems to be to install using 
+  On **mac** osx the best way seems to be to install using 
   [macports](http://www.macports.org/)
   or [homebrew](http://mxcl.github.com/homebrew/).
 
-  Windows users are lord over us all and aware of their download-double-click
+  **Windows** users are lord over us all and aware of their download-double-click
   syndrome so they know what to do to install nodejs.
 
-  To install on [arch linux](http://archlinux.org):
+  To install on **[arch linux](http://archlinux.org)**:
 
   `pacman -Sy nodejs`
 
@@ -255,7 +255,7 @@ close database connection and call `closeCallback` with no arguments
 
 ## .moment
 
-The moment factories are located in `require('argent-drivers').moment.
+The moment factories are located in `require('argent-drivers').moment`
 
 See [moment.js docs] (http://momentjs.com/docs/) for information on how
 to construct and use moment objects.
