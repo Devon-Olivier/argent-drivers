@@ -73,7 +73,7 @@ var lottoplusDrivers = argentDrivers.lottoplus;
 var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
 var moment = argentDrivers.moment;
 
-var date = moment('2012 12 1', 'YYYY MM DD'),
+var date = moment('2012 12 1', 'YYYY MM DD');
 nlcbLottoplusDriver.getDrawDate(date, function(error, draw){
   if(error){
     console.log(error);
@@ -192,8 +192,6 @@ nlcbLottoplusDriver.getDrawNumberRange(range, function(error, draws){
 ```
 #### `.lottoplus.mongo`
 Stores and retrieves draws from a mongo database.
-
-###Usage
 
 Get a driver:
 ```js
@@ -350,6 +348,7 @@ var range = {
 mongoLottoplusDriver.getDrawNumberRange(range, function(error, draws){
   if(error){
     console.log(error);
+    //close database c'est tres important
     return;
   }
   draws.forEach(function(draw){
