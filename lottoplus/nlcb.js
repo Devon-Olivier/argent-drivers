@@ -100,7 +100,7 @@ exports.createDriver = function createDriver(driverOptions){
         _parseDrawHtml(html,function(error, draw){
           if(error instanceof ERROR.NODRAW){
             error.message = 'Draw does not exist';
-            error.details = aMoment;
+            error.details = aMoment.toDate();
           }
           drawDateCallback(error, draw); 
         });
