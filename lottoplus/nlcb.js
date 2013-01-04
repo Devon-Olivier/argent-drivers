@@ -288,21 +288,21 @@ exports.createDriver = function createDriver(driverOptions){
     });
   }; 
 
-  _adapter.getDrawDate(aMoment, drawDateCallback){
+  _adapter.getDrawDate = function getDrawDate(aMoment, drawDateCallback){
     var job = function job(jobCallback){
       _getDrawDate(aMoment, jobCallback);
     };
     this.doJob(job, drawDateCallback);
   };
 
-  _adapter.getDrawDateRange = function(range, drawDateRangeCallback){
+  _adapter.getDrawDateRange = function getDrawDateRange(range, drawDateRangeCallback){
     var job = function job(jobCallback){
       _getDrawDateRange(range, jobCallback);
     };
     this.doJob(job, drawDateRangeCallback);
   };
 
-  _adapter.getDrawNumber(number, drawNumberCallback){
+  _adapter.getDrawNumber = function getDrawNumber(number, drawNumberCallback){
     var job = function job(jobCallback){
       _getDrawNumber(number, jobCallback);
     };
