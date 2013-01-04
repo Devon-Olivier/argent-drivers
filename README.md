@@ -53,6 +53,35 @@ var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
 ```
 ####Methods of the scraper
 
+#### `.getDrawDate(aMoment, drawDateCallback)`
+
+Get draw of a given date:
+
+`getDrawDate`(`aMoment`, `drawDateCallback`) calls `drawDateCallback`
+with the draw whose date is equal to the one specified by `aMoment`.
+
+`aMoment` is an object is an instance of Moment---see [.moment](#moment).
+
+`drawDateRangeCallback` is called with an error object, which
+is null if no error occured, and a draw with the specified date. 
+
+The following prints the draw for 1 December, 2012.
+```js
+#! /usr/bin/env node
+var argentDrivers = require('argent-drivers');
+var lottoplusDrivers = argentDrivers.lottoplus;
+var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+var moment = argentDrivers.moment;
+
+var date = moment('2012 12 1', 'YYYY MM DD'),
+nlcbLottoplusDriver.getDrawDate(date, function(error, draw){
+  if(error){
+    console.log(error);
+    return;
+  }
+  console.log(draw);
+});
+```
 #### `.getDrawDateRange(range, drawDateRangeCallback)`
 
 Get draws in given date-range:
@@ -94,6 +123,31 @@ nlcbLottoplusDriver.getDrawDateRange(range, function(error, draws){
   draws.forEach(function(draw){
     console.log(draw);
   });
+});
+```
+#### `.getDrawNumber(number, drawNumberCallback)`
+
+Get draw of a given number:
+
+`getDrawNumber`(`number`, `drawNumberCallback`) calls `drawNumberCallback`
+with the draw whose number is equal to `number`.
+
+`drawNumberRangeCallback` is called with an error object, which
+is null if no error occured, and a draw with the specified number. 
+
+The following prints the first lottoplus draw ever.
+```js
+#! /usr/bin/env node
+var argentDrivers = require('argent-drivers');
+var lottoplusDrivers = argentDrivers.lottoplus;
+var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+
+nlcbLottoplusDriver.getDrawNumber(1, function(error, draw){
+  if(error){
+    console.log(error);
+    return;
+  }
+  console.log(draw);
 });
 ```
 #### `.getDrawNumberRange(range, drawNumberRangeCallback)`
@@ -153,6 +207,39 @@ var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver(dbOptions);
 ```
 ####Methods of the driver
 
+#### `.getDrawDate(aMoment, drawDateCallback)`
+
+Get draw of a given date:
+
+`getDrawDate`(`aMoment`, `drawDateCallback`) calls `drawDateCallback`
+with the draw whose date is equal to the one specified by `aMoment`.
+
+`aMoment` is an object is an instance of Moment---see [.moment](#moment).
+
+`drawDateRangeCallback` is called with an error object, which
+is null if no error occured, and a draw with the specified date. 
+
+The following prints the draw for 1 December, 2012.
+```js
+#! /usr/bin/env node
+var argentDrivers = require('argent-drivers');
+var lottoplusDrivers = argentDrivers.lottoplus;
+var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+var moment = argentDrivers.moment;
+
+var date = moment('2012 12 1', 'YYYY MM DD'),
+nlcbLottoplusDriver.getDrawDate(date, function(error, draw){
+  if(error){
+    console.log(error);
+    //close database c'est tres important
+    nlcbLottoplusDriver.close(function(){});
+    return;
+  }
+  //close database c'est tres important
+  nlcbLottoplusDriver.close(function(){});
+  console.log(draw);
+});
+
 #### `.getDrawDateRange(range, drawDateRangeCallback)`
 
 Get draws in given date-range:
@@ -189,6 +276,8 @@ var range = {
 mongoLottoplusDriver.getDrawDateRange(range, function(error, draws){
   if(error){
     console.log(error);
+    //close database c'est tres important
+    mongoLottoplusDriver.close(function(){});
     return;
   }
   draws.forEach(function(draw){
@@ -196,6 +285,35 @@ mongoLottoplusDriver.getDrawDateRange(range, function(error, draws){
   });
   //close database c'est tres important
   mongoLottoplusDriver.close(function(){});
+});
+```
+#### `.getDrawNumber(number, drawNumberCallback)`
+
+Get draw of a given number:
+
+`getDrawNumber`(`number`, `drawNumberCallback`) calls `drawNumberCallback`
+with the draw whose number is equal to `number`.
+
+`drawNumberRangeCallback` is called with an error object, which
+is null if no error occured, and a draw with the specified number. 
+
+The following prints the first lottoplus draw ever.
+```js
+#! /usr/bin/env node
+var argentDrivers = require('argent-drivers');
+var lottoplusDrivers = argentDrivers.lottoplus;
+var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+
+nlcbLottoplusDriver.getDrawNumber(1, function(error, draw){
+  if(error){
+    console.log(error);
+    //close database c'est tres important
+    mongoLottoplusDriver.close(function(){});
+    return;
+  }
+  //close database c'est tres important
+  mongoLottoplusDriver.close(function(){});
+  console.log(draw);
 });
 ```
 #### `.getDrawNumberRange(range, drawNumberRangeCallback)`
