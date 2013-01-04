@@ -60,7 +60,7 @@ Get draw of a given date:
 `getDrawDate`(`aMoment`, `drawDateCallback`) calls `drawDateCallback`
 with the draw whose date is equal to the one specified by `aMoment`.
 
-`aMoment` is an object is an instance of Moment---see [.moment](#moment).
+`aMoment` is an instance of Moment---see [.moment](#moment).
 
 `drawDateRangeCallback` is called with an error object, which
 is null if no error occured, and a draw with the specified date. 
@@ -214,7 +214,7 @@ Get draw of a given date:
 `getDrawDate`(`aMoment`, `drawDateCallback`) calls `drawDateCallback`
 with the draw whose date is equal to the one specified by `aMoment`.
 
-`aMoment` is an object is an instance of Moment---see [.moment](#moment).
+`aMoment` is an instance of Moment---see [.moment](#moment).
 
 `drawDateRangeCallback` is called with an error object, which
 is null if no error occured, and a draw with the specified date. 
@@ -239,6 +239,7 @@ nlcbLottoplusDriver.getDrawDate(date, function(error, draw){
   nlcbLottoplusDriver.close(function(){});
   console.log(draw);
 });
+```
 
 #### `.getDrawDateRange(range, drawDateRangeCallback)`
 
