@@ -158,7 +158,7 @@ exports.createDriver = function createDriver(options){
           return;
         }
         if(draw === null){
-          jobCallback(new ERROR.NODRAW('draw does not exist', date), null);
+          jobCallback(new ERROR.NODRAW('draw does not exist', number), null);
           return;
         }
         jobCallback(null, draw);
