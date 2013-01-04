@@ -302,9 +302,9 @@ exports.createDriver = function createDriver(driverOptions){
     this.doJob(job, drawDateRangeCallback);
   };
 
-  _adapter.getDrawNumber(aMoment, drawNumberCallback){
+  _adapter.getDrawNumber(number, drawNumberCallback){
     var job = function job(jobCallback){
-      _getDrawNumber(aMoment, jobCallback);
+      _getDrawNumber(number, jobCallback);
       this.doJob(job, drawNumberCallback);
     };
   };
