@@ -93,6 +93,25 @@ exports.createDriver = function createDriver(options){
 
   //TODO getDrawDateRange and getDrawNumberRange have common logic
   //ABSTRACT AWAY!!
+  _adapter.getDrawDate = function getDrawDate(aMoment, drawDateCallback){
+    var date = aMoment.toDate();
+    var queryObject = {'date': date};
+    var job = function(jobCallback){
+      _lottoplusDB.collection('draws').findOne(queryObject, function findCallback(error, draw){
+        if(error){
+          jobCallback(new ERROR.DATABASE('mongo query error', error), null);
+          return;
+        }
+        if(draw === null){
+          jobCallback(new ERROR.NODRAW('draw does not exist', date), null);
+          return;
+        }
+        jobCallback(null, draw);
+      });
+    };
+    this.doJob(job, drawDateCallback);
+  };
+
   _adapter.getDrawDateRange = function getDrawDateRange(range, drawDateRangeCallback){
     //TODO: ensure that range is correct type
     var startDate = range.start.toDate();
@@ -128,6 +147,24 @@ exports.createDriver = function createDriver(options){
       });
     };
     this.doJob(job, drawDateRangeCallback);
+  };
+
+  _adapter.getDrawNumber = function getDrawNumber(number, drawNumberCallback){
+    var queryObject = {'number': number};
+    var job = function(jobCallback){
+      _lottoplusDB.collection('draws').findOne(queryObject, function findCallback(error, draw){
+        if(error){
+          jobCallback(new ERROR.DATABASE('mongo query error', error), null);
+          return;
+        }
+        if(draw === null){
+          jobCallback(new ERROR.NODRAW('draw does not exist', date), null);
+          return;
+        }
+        jobCallback(null, draw);
+      });
+    };
+    this.doJob(job, drawNumberCallback);
   };
 
   _adapter.getDrawNumberRange = function getDrawNumberRange(range, drawNumberRangeCallback){
