@@ -3,18 +3,18 @@
  * Author: Devon Olivier
  * Year: 2012
  * Purpose: Manages connections and CRUD requests to the lottoplus
- * 	    mongo database 
+ *          mongo database 
  * Platform: node.js
  ***********************************************************/
-'use strict'
+'use strict';
 //TODO give these names that would make them easily distinguishable
 //as globals
 //native modules
-var http = require('http');
-var events = require('events');
+//var http = require('http');
+//var events = require('events');
 
 //external modules
-var moment = require('moment');
+//var moment = require('moment');
 var mongoskin = require('mongoskin');
 
 //local modules
@@ -205,10 +205,10 @@ exports.createDriver = function createDriver(options){
   //TODO handle errors
   _adapter.storeDraws = function(draws, storeDrawsCallback){
     var job = function(callback){
-      _lottoplusDB.collection('draws').insert(draws, callback)
+      _lottoplusDB.collection('draws').insert(draws, callback);
     };
     this.doJob(job, storeDrawsCallback);
-  }
+  };
 
   //TODO consider treating driver as a state machine.
   //States include disconnected, querying, disconnecting...
@@ -233,7 +233,6 @@ exports.createDriver = function createDriver(options){
         //if not setup to close already do so now
         if(!_setUpToClose){//
           //console.log("[mongo adapter]: setting up adapter to close connection");
-          var self = this;
           this.once('no more jobs', function(){
             //console.log("[mongo adapter]: adapter not setup to close any more");
             _setUpToClose = false;
