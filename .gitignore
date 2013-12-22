@@ -2,3 +2,4 @@
 *sw*
 *.lock
 drivertest.js
+/node_modules
