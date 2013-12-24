@@ -24,9 +24,10 @@
   "author": "Devon Olivier",
   "license": "BSD",
   "readmeFilename": "README.md",
-  "dependencies":{
-    "jsdom": "0.2.15",
-    "moment": "1.7.2",
-    "mongoskin": "0.4.4"
+  "dependencies": {
+    "jsdom": "~0.2.15",
+    "moment": "~1.7.2",
+    "mongoskin": "0.4.4",
+    "q": "~0.9.7"
   }
 }
