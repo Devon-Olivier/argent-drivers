@@ -1,9 +1,9 @@
 /************************************************************
  * File: lottoplus.nlcb.js
  * Author: Devon Olivier
- * Year: 2012
- * Purpose: Manages connections and CRUD requests to the lottoplus
- * 	    nlcb database 
+ * Year: 2013
+ * Purpose: Manages connections and read requests to the lottoplus
+ * nlcb database 
  * Platform: node.js
  ***********************************************************/
 var JQUERYPATH = '../lib/jquery.js';
@@ -14,63 +14,31 @@ var QUERYSTRING = require('querystring');
 
 //external node modules
 var Q = require('q');
+require('twix');
 var JSDOM = require('jsdom');
 var MOMENT = require('moment');
 
 //native argent modules
 var ERROR = require('../lib/errors.js');
-var secretaryMaker = require('../lib/secretary.js');
-var devonUtil = require('../lib/utils.js');
+var NLCBCONF = require('../config/nlcb-conf.json');
 
-/************************************************************
- * TODO fix documentation
- * getDrawDateRange(range, drawDateRangeCallback) calls 
- * drawDateRangeCallback with the draws whose dates are 
- * within the range specified by 'range'. The draws passed on to 
- * drawDateRangeCallback shall have dates greater than or equal to
- * the start boundary of the range, and less than the end
- * boundary of the range. i.e. all dates in [start, end).
- * 
- * @param range is an object with properties 'start' and 'end'.
- * Each of these is an object is a Moment 
- * see http://momentjs.com/docs/. The 'start' Moment represents
- * the start boundary of the date range and the 'end' Moment
- * represents the end boundary of the date range.
- * 
- * @param drawDateRangeCallback is called with an array 
- * containing the draws with dates in range if one exists
- * and [] otherwise.
- *
- *
- * getDrawNumberRange calls drawNumberRangeCallback with the draws 
- * whose numbers are within the range specified by 'range'. The 
- * draws passed on to drawNumberRangeCallback shall have numbers 
- * greater than or equal to the start boundary of the range, and 
- * less than the end boundary of the range. i.e. all draw numbers in 
- * [start, end).
- *
- * @param range is an object with properties 'start' and 'end'
- * representing the start and end boundaries of the range
- * respectively.
- *
- * @param drawNumberRangeCallback is called with an array containing 
- * the draws with numbers in range if one exists and [] 
- * otherwise.
- *
- *
- * close closes the database connection
- ***********************************************************/
-// a Draw is an Object with the following properties
-// number: the draw number
-// date: Date object representing the date for this draw
-// numbersPlayed: an array of numbers played for this draw
-// jackpot: a number representing the jackpot for this draw
-// numberOfWinners: a number representing the number of winners for the draw
+//local libs
+var DUTILS = require('../lib/utils.js');
+
+/** 
+ * a Draw is an Object with the following properties
+ * number: the draw number
+ * date: Date object representing the date for this draw
+ * numbersPlayed: an array of numbers played for this draw
+ * jackpot: a number representing the jackpot for this draw
+ * numberOfWinners: a number representing the number of winners for the draw
+ **/
 
 /**
- * _parsDrawHtml: String -> Draw
+ * _parsDrawHtml: String -> promis
  * @param html the html returned from an http post request to nlcb.co.tt/search/<...>
- * @return a promise for a Draw representing the draw from html
+ * @return a promise for a Draw representing the draw from html. If the draw does
+ * not exist then the promise gets resolved with null.
  * given:
  *  <table>
  *    <tbody>
@@ -91,11 +59,12 @@ var devonUtil = require('../lib/utils.js');
  *    numberOfWinners: 0
  *  };
  **/
+var _parseDrawHtml = function _parseDrawHtml( html ) {
 
-var _parseDrawHtml = function _parseDrawHtml(html){
   //We are receiving bad html which fails when wrapped 
   //by $ so we take out the table fragment and proceed
   //from there
+
   /**
    * tableHtml: String -> String
    * take the bad html returned by nlcb and return the table fragment of the html
@@ -103,442 +72,290 @@ var _parseDrawHtml = function _parseDrawHtml(html){
    * @return the table html code fragment from the bad html if it exists or null
    * otherwise
    **/
-  var tableHtml = function tableHtml(theHtml){
-    var tableStartMatch = theHtml.match(/<\s*table/i);
-    var tableEndMatch = theHtml.match(/<\s*\/\s*table\s*>/i);
-    var tableCode = !tableStartMatch || !tableEndMatch?
+  var tableHtml = function tableHtml( theHtml ) {
+    var tableStartMatch = theHtml.match( /<\s*table/i );
+    var tableEndMatch = theHtml.match( /<\s*\/\s*table\s*>/i );
+    var tableCode = !tableStartMatch || !tableEndMatch ?
       null:
-      theHtml.substring(tableStartMatch.index, tableEndMatch.index + tableEndMatch[0].length);
+      theHtml.substring( tableStartMatch.index, 
+          tableEndMatch.index + tableEndMatch[0].length );
     return tableCode;
   };
   
   /**
-   * parse: Error Window -> Draw 
-   * @param errors errors passed to parse from a jsdom.env call
-   * @param window an object representing the dom window object
-   * @return a Draw object representing the draw information from
-   * the table in the dom window object
+   * parse: Window -> Draw
+   * consume Window object and produce a promise for a Draw represented
+   * by the child table of Window.
+   * Throws DRAWPARSE if any part of the table cannot be parsed.
+   * @param window an object representing the dom window object from a
+   * jsdom.env call
+   * @return Draw
    **/
-  var parse = function parse(errors, window){
-    var parseNumber = function parseNumber(tds){
+  var parse = function parse( window ) {
+    var parseNumber = function parseNumber( tds ) {
       //TODO: we probably didn't have to wrap these again
       //	but it is the only way I know how for now
-      //console.log(tds[2]);
-      var number = $(tds[2]).text().match(/\d+/);
-      if(number === null){
-        return null;
+      var number = $( tds[2] ).text().match( /\d+/ );
+      if( null === number ){
+        throw ( new ERROR.DRAWPARSE('Unexpected draw number format') );
       }
-      //return number && +number[0];
       return +number[0];
     };
 
-    var parseDate = function parseDate(tds){
-      //TODO: Handle errors
-      return new Date($(tds[4]).text());
-    };
-
-    var parseNumbersPlayed = function parseNumbersPlayed(tds){
-      var numbersPlayed = $(tds[6]).text().match(/\d+/g);
-      if(numbersPlayed === null) {
-        return null;
+    var parseDate = function parseDate( tds ) {
+      var date = MOMENT( $( tds[4] ).text() );
+      if( date.isValid() ) {
+        return date.toDate();;
       }
-      return numbersPlayed.map(function(n){ return +n;});
+        throw ( new ERROR.DRAWPARSE('Unexpected draw date format') );
     };
 
-    var parseJackopt = function parseJackopt(tds){
-      var jackpot = $(tds[8]).text(); 
-      jackpot = jackpot.replace(/,\s*/g, '');
-      jackpot = jackpot.match(/\d+\.\d+/);
-      if(!jackpot){
-        return null;
+    var parseNumbersPlayed = function parseNumbersPlayed( tds ) {
+      var numbersPlayed = $( tds[6] ).text().match( /\d+/g );
+      if( null === numbersPlayed ) {
+        throw ( new ERROR.DRAWPARSE('Unexpected draw number list format') );
+      }
+      return numbersPlayed.map( function( n ){ return +n;} );
+    };
+
+    var parseJackopt = function parseJackopt( tds ) {
+      var jackpot = $( tds[8] ).text(); 
+      jackpot = jackpot.replace( /,\s*/g, '' );
+      jackpot = jackpot.match( /\d+(\.\d+)?/ );
+      if( !jackpot ) {
+        throw ( new ERROR.DRAWPARSE( 'Unexpected draw jackpot format' ) );
       }
       jackpot = +jackpot[0];
 
       //sometimes nlcb reports jackpots less than 10 we assume that these
       //are measured in millions
-      if(jackpot < 10){
-        jackpot *= 1000000;
+      if( jackpot < 10 ) {
+        jackpot *= 1e6;
       }
       return jackpot;
     };
 
-    var parseNumberOfWinners = function parseNumberWinners(tds){
-      //TODO: Handle errors
-      return +$(tds[10]).text().match(/\d+/); 
+    var parseNumberOfWinners = function parseNumberWinners( tds ) {
+      var number =  $( tds[10] ).text().match( /\d+/ );
+      if( null === number ) {
+        throw ( new ERROR.DRAWPARSE( 'Unexpected draw number of winners format' ) );
+      }
+      return +number; 
     };
 
     var $ = window.$;
-    var wrappedTds = $('td');
-    if(wrappedTds.length < 10){
-      deferred.reject(new ERROR.DRAWPARSE('Unexpected draw format'));
+    var wrappedTds = $( 'td' );
+    if( wrappedTds.length < 10 ) {
+      throw ( new ERROR.DRAWPARSE( 'Unexpected draw format' ) );
     }
     else {
       var draw = {};
-      draw.number = parseNumber(wrappedTds);
-      draw.date = parseDate(wrappedTds);
-      draw.numbersPlayed = parseNumbersPlayed(wrappedTds);
-      draw.jackpot = parseJackopt(wrappedTds);
-      draw.numberOfWinners = parseNumberOfWinners(wrappedTds);
-      if(null === draw.number) {
-        deferred.reject(new ERROR.DRAWPARSE('Unexpected draw number format'));
-      }
-      else if (null === draw.date) {
-        deferred.reject(new ERROR.DRAWPARSE('Unexpected draw date format'));
-      }
-      else if (null === draw.numbersPlayed) {
-        deferred.reject(new ERROR.DRAWPARSE('Unexpected draw number list format'));
-      }
-      else if (null === draw.jackpot) {
-        deferred.reject(new ERROR.DRAWPARSE('Unexpected draw jackpot format'));
-      }
-      else if (null === draw.numberOfWinners) {
-        deferred.reject(new ERROR.DRAWPARSE('Unexpected draw number of winners format'));
-      }
-      else {
-        deferred.resolve(draw);
-      }
+      draw.number = parseNumber( wrappedTds );
+      draw.date = parseDate( wrappedTds );
+      draw.numbersPlayed = parseNumbersPlayed( wrappedTds );
+      draw.jackpot = parseJackopt( wrappedTds );
+      draw.numberOfWinners = parseNumberOfWinners( wrappedTds );
+      return ( draw );
     }
   };
 
   var deferred = Q.defer();
-  html = tableHtml(html);
-
+  html = tableHtml( html );
   //if we didn't get a table in the html we assume that
   //the draw does not exist.
-  if(html === null){
-    deferred.reject(new ERROR.NODRAW());
+  if( null === html ) {
+    return Q.resolve( null );
   }
   else {
-    JSDOM.env(html, [JQUERYPATH], parse);
+    JSDOM.env( html, [JQUERYPATH], function( errors, window ) {
+      if( errors ) {
+        deferred.reject( errors );
+      }
+      else {
+        try {
+          deferred.resolve( parse( window ) );
+        }
+        catch( e ) {
+          deferred.reject( e );
+        }
+      }
+    });
   }
   return deferred.promise;
 };
-exports.parseDrawHtml = _parseDrawHtml;
-/*-----------------------OLD IMPLEMENTATION-------------------
-  exports.createDriver = function createDriver(driverOptions){
-  var _adapter = Object.create(secretaryMaker.createSecretary());
 
-//TODO _getDrawDate and _getDrawNumber have common logic
-//TODO _getDrawNumberRange and _getDrawDateRange have common logic
-//Abstract away!!!
-var _getDrawDate = function(aMoment, drawDateCallback){
-var nlcbDate = {
-day: aMoment.format("DD"), 
-month: aMoment.format("MMM"), 
-year: aMoment.format("YY")
-};
-
-var postData = querystring.stringify(nlcbDate);
-//TODO should come from settings file like mongo adapter
-//OR should it?
-var options = {
-host: 'www.nlcb.co.tt',
-port: 80,
-path: '/search/lottoplus/cashQuery.php',
-method: 'POST',
-headers: {
-'Content-Type': 'application/x-www-form-urlencoded',
-//'content-length': postData.length,
-'Connection': 'keep-alive'
-}
-}; 
-
-var html = "";
-var httpRequest = http.request(options, function(res){
-res.setEncoding('utf8');
-res.on('data', function(chunk){
-html+=chunk;
-});
-
-res.on('end', function(){
-//TODO handle other possible errors from _parseDrawHtml
-_parseDrawHtml(html,function(error, draw){
-if(error instanceof ERROR.NODRAW){
-error.message = 'Draw does not exist';
-error.details = aMoment.toDate();
-}
-drawDateCallback(error, draw); 
-});
-});
-});
-httpRequest.end(postData);
-
-//Listen for HTTP errors
-httpRequest.on('error',function(e){
-var networkError = new ERROR.NETWORK('HTTP error', e);
-drawDateCallback(networkError, null);
-});
-};
-
-var _getDrawNumber = function _getDrawNumber(number, drawNumberCallback){
-var postData = querystring.stringify({'drawno': number});
-var options = {
-host: 'www.nlcb.co.tt',
-port: 80,
-path: '/search/lottoplus/FindDraw.php',
-method: 'POST',
-headers: {
-'Content-Type': 'application/x-www-form-urlencoded',
-'Connection': 'keep-alive'
-}
-}; 
-
-var html = "";
-var httpRequest = http.request(options, function(res){
-res.setEncoding('utf8');
-res.on('data', function(chunk){
-  html+=chunk;
-});
-
-res.on('end', function(){
-  //TODO handle other possible errors from _parseDrawHtml
-  _parseDrawHtml(html,function(error, draw){
-    if(error instanceof ERROR.NODRAW){
-      error.message = 'Draw does not exist';
-      error.details = number;
-    }
-    drawNumberCallback(error, draw); 
-  });
-});
-});
-
-httpRequest.end(postData);
-
-//Listen for HTTP errors
-httpRequest.on('error',function(e){
-  var networkError = new ERROR.NETWORK('HTTP error', e);
-  drawNumberCallback(networkError, null);
-});
-};
-
-var _isAllNoDraw = function _isAllNoDraw(errors){
-  return errors.every(function isNoDraw(error){
-    return error instanceof ERROR.NODRAW;
-  });
-}
-
-var _getDrawDateRange = function _getDrawDateRange(range, _drawDateRangeCallback){
-  //TODO: validate range
-
-  //console.log('driver.getDrawDateRange:', range);
-  var numberOfDaysInRange = range.end.diff(range.start, "days");
-  var dates = devonUtil.rangeArray(numberOfDaysInRange - 1).map(function(number){
-    return range.start.clone().add('days', number);
-  });
-
-  devonUtil.asyncMap(dates, _getDrawDate, function(asyncMapResults){
-    var errors = [];
-    var results = [];
-    var error;
-    asyncMapResults.forEach(function(result, index){
-      if(result[0] !== null){
-        errors.push(result[0]);
-      }
-      else{
-        results.push(result[1]);
-      }
+/**
+ * nlcbRequest: options -> promise
+ * make http post request to nlcb.co.tt and return a promise
+ * for the html sent back. Options specified in @param options.
+ * @param options is an object with all the necessary properties
+ * to pass to http.request.
+ **/
+var _nlcbRequest = function nlcbRequest( options ) {
+  var deferred = Q.defer();
+  var httpRequest = HTTP.request( options, function( res ) {
+    var html = "";
+    res.setEncoding( 'utf8' );
+    res.on('data', function( chunk ) {
+      html+=chunk;
     });
 
-    //if no errors
-    if(errors.length === 0){
-      error = null;
-      //console.log('getDrawDateRange: no errors...');
-    }
-    else{
-      //console.log('we have errors deciding what to do');
-      //if all draws are ERROR.NODRAW
-      if(_isAllNoDraw(errors)){
-        //if no draws were returned
-        if(results.length === 0){
-          //console.log('getDrawDateRange: everything alright...no draws in range');
-          error = new ERROR.NODRAWSINRANGE('All draws in range do not exist', range);
-        } 
-        else{
-          //some draws in range didn't exist... we are still ok
-          //console.log('getDrawDateRange: everything alright...some draws in range do not exist.');
-          //TODO consider returning some error which say that some of the draws didn't exist
-          error = null;
-        }
-      }
-      else{ //some errors are not ERROR.NODRAW errors
-        if(results.length === 0){//if no draws returned then we can't say if the draws exist or not
-          //console.log('getDrawDateRange: cannot determine if every draw exist');
-          error = new ERROR.FATALERROR('Cannot get any draws', errors);
-        }
-        else{//if some draws are returned and we have non ERROR.NODRAW errors, then
-          //we must assume that what we have is a partial result set. The draws that 
-          //returned non ERROR.DRAW errors may exist!!.
-          //console.log('getDrawDateRange: got some draws but not sure if there are any more due to errors');
-          error = new ERROR.PARTIALRESULTS('Partial draws', errors);
-        }
-      }
-    }
-
-  _drawDateRangeCallback(error, results); 
-  });
-}; 
-
-var _getDrawNumberRange = function _getDrawNumberRange(range, _drawNumberRangeCallback){
-  //TODO: ensure that range is correct type
-  //TODO consider using some sort of assert library here
-
-  //TODO clients should ensure that they pass correct range and we should throw here. Or should we?
-  //var rangeError; 
-  //TODO we should have a function line range.length()
-  //if(range.end - range.start <= 0){
-  //  var rangeError = new RangeError('range.end <= range.start');
-  //  rangeError.details = range;
-  //  return _drawNumberRangeCallback(rangeError, null);
-  //}
-
-  //console.log('getDrawDateRange: ...');
-  devonUtil.asyncMap(devonUtil.rangeArray(range.start, range.end-1) , _getDrawNumber, function(asyncMapResults){
-    var errors = [];
-    var results = [];
-    var error;
-    asyncMapResults.forEach(function(result, index){
-      if(result[0] !== null){
-        errors.push(result[0]);
-      }
-      else{
-        results.push(result[1]);
-      }
+    res.on( 'end', function(){
+      deferred.resolve(html);
     });
-
-    //if no errors
-    if(errors.length === 0){
-      error = null;
-      //console.log('getDrawDateRange: no errors...');
-    }
-    else{
-      //console.log('we have errors deciding what to do');
-      //if all draws are ERROR.NODRAW
-      if(_isAllNoDraw(errors)){
-        //if no draws were returned
-        if(results.length === 0){
-          console.log('getDrawNumberRange: everything alright...no draws in range');
-          error = new ERROR.NODRAWSINRANGE('All draws in range do not exist', range);
-        } 
-        else{
-          //some draws in range didn't exist... we are still ok
-          console.log('getDrawNumberRange: everything alright...some draws in range do not exist.');
-          error = null;
-        }
-      }
-      else{ //some errors are not ERROR.NODRAW errors
-        if(results.length === 0){//if no draws returned then we can't say if the draws exist or not
-          console.log('getDrawNumberRange: cannot determine if every draw exist');
-          error = new ERROR.FATALERROR('Cannot get any draw', errors);
-        }
-        else{//if some draws are returned and we have non ERROR.NODRAW errors, then
-          //we must assume that what we have is a partial result set. The draws that 
-          //returned non ERROR.DRAW errors may exist!!.
-          console.log('getDrawNumberRange: got some draws but not sure if there are any more due to errors');
-          error = new ERROR.PARTIALRESULTS('Partial draws', errors);
-        }
-      }
-    }
-
-  _drawNumberRangeCallback(error, results); 
   });
-}; 
 
-_adapter.getDrawDate = function getDrawDate(aMoment, drawDateCallback){
-  var job = function job(jobCallback){
-    _getDrawDate(aMoment, jobCallback);
+  httpRequest.on( 'error',function( e ) {
+    var networkError = new ERROR.NETWORK( 'HTTP error', e );
+    deferred.reject( networkError );
+  });
+
+  httpRequest.end( options.queryString );
+  return deferred.promise;
+}
+
+/**
+ * _getHtml: Path, QueryObject -> promise
+ * Consume a Path and a Query and makes a query to nlcb
+ * for html at that path with the query arguments specfied
+ * in QueryObjct, then returns a promise for this html.
+ * @path the path to make the query to
+ * @queryObject an object with properties for each query argument
+ **/
+var _getHtml = function _getHtml( path, queryObject ) {
+  var options = Object.create( NLCBCONF );
+  options.path = path;
+  options.queryString = QUERYSTRING.stringify( queryObject );
+  return _nlcbRequest( options );
+};
+
+/**
+ * _getParseHtml: Path, Object, string -> promise
+ * Consume a path on nlcb an object with properties coresponding to query
+ * parameters and a string and produce promise for a Draw represented by the
+ * html returned by nlcb at that path and query parameters. If an error occurs
+ * set the 'details' property of the error object to the string argument.
+ *
+ * @param path the path to make query to.
+ * @QueryObject an object with properties for each query argument.
+ * @errorDetails a string to assign to the details property of the error object
+ * in case of error.
+ **/
+var _getParseHtml = function _getParseHtml( path, queryObject, errorDetails ) {
+  return _getHtml( path, queryObject )
+    .then( _parseDrawHtml )
+    .then( null, function( error ) {
+      error.details = errorDetails;
+      throw error;
+    });
+};
+
+/**
+ * _getNumber NumericValue -> promise
+ * Consume a NumericValue and returns a promise for the draw with
+ * a number property corresponding to that NumericValue.
+ * @param number a NumericValue representing a draw number
+ **/
+var _getNumber = function _getNumber( number) {
+  var path = '/search/lottoplus/FindDraw.php';
+  var queryObject = {drawno: number};
+  return _getParseHtml( path, queryObject, 'query made for draw number ' + number );
+};
+
+/**
+ * _getDate Moment -> promise
+ * Consume a Moment and returns a promise for the draw with a date
+ * property corresponding to that Moment.
+ * @param number a Moment representing a draw date;
+ **/
+var _getDate = function _getDate( moment ) {
+  var path = '/search/lottoplus/cashQuery.php';
+  var queryObject= {
+    day: moment.format( "DD" ), 
+    month: moment.format( "MMM" ), 
+    year: moment.format( "YY" )
   };
-  this.doJob(job, drawDateCallback);
+  return _getParseHtml( path, queryObject, 'query made for ' + moment.toDate() );
 };
 
-_adapter.getDrawDateRange = function getDrawDateRange(range, drawDateRangeCallback){
-  var job = function job(jobCallback){
-    _getDrawDateRange(range, jobCallback);
+/**
+ * DrawProperty is any one of the following types:
+ *  number
+ *  string
+ *  Date
+ *  MOMENT?(considering)
+ *  object (with start and end properties of the previous types)
+ *
+ * getDraw: DrawProperty -> promise
+ * Consume a DrawProperty of a set of draws return a promise for those draws
+ * specified by the DrawProperty.
+ *
+ * If the DrawProperty is a number return a promise for the draw with that number
+ * property.
+ * 
+ * If the DrawProperty is an object with properties 'start' and 'end', which are
+ * numbers, return a promise for an array of Draws whose number property is
+ * in the range [start, end).
+ *
+ * If the DrawProperty is a string that is coerceable to a Date, return a promise
+ * for the draw with that date property.
+ *
+ * If the DrawProperty is an object with properties 'start' and 'end', that are
+ * both coerceable to a Date, return a promise for an array of Draws whose date
+ * property is in the range [Date(start), Date(end) ).
+ *
+ * If the DrawProperty is a Date, return a promise for the draw on that date.
+ *
+ * If the DrawProperty is an object with properties 'start' and 'end', that are
+ * Dates, return a promise for an array of Draws whose date property is in the 
+ * range [start, end).
+ **/
+var getDraw = function getDraw(property) {
+
+  var isNumberRange = function isNumberRange( value ) {
+    return DUTILS.isNumeric( value.start ) && DUTILS.isNumeric( value.end );
   };
-  this.doJob(job, drawDateRangeCallback);
-};
 
-_adapter.getDrawNumber = function getDrawNumber(number, drawNumberCallback){
-  var job = function job(jobCallback){
-    _getDrawNumber(number, jobCallback);
+  var isDatish = function isDatish( value ) {
+    if( 'object' === typeof( value ) ) {
+      if( Array.isArray( value ) ) {
+        return MOMENT( value ).isValid();
+      }
+      return value instanceof Date;
+    }
+    return MOMENT( value ).isValid();
   };
-  this.doJob(job, drawNumberCallback);
-};
 
-_adapter.getDrawNumberRange = function getDrawNumberRange(range, drawNumberRangeCallback){
-  var job = function job(jobCallback){
-    _getDrawNumberRange(range, jobCallback);
+  var isDatishRange = function isDatishRange( value ) {
+    return isDatish( value.start ) &&  isDatish( value.end );
   };
-  this.doJob(job, drawNumberRangeCallback);
-};
 
-_adapter.close = function close(closeCallback){
-  closeCallback();
-};
-return _adapter; 
-}; 
-
-//TODO make this available to clients 
-//as an external library maybe?
-var _parseDrawHtml = function _parseDrawHtml(html, parseCallback){
-  //We are receiving bad html which fails when wrapped 
-  //by $ so we take out the table fragment and proceed
-  //from there
-  var tableStartMatch = html.match(/<\s*table/i);
-  var tableEndMatch = html.match(/<\s*\/\s*table\s*>/i);
-  var tableHtml;//initialised in the else of the following if 
-  var parseError;
-
-
-  //TODO there is a better way to tell that a draw does not exist
-  //we could check the html for the string returned by nlcb.co.tt
-  //when a draw does not exist. FIX THIS
-  //UPDATE: this seems harder than at first since the message returned
-  //for a draw that does not exist is not standard on nlcb.co.tt
-  if(!tableStartMatch || !tableEndMatch) {
-    parseError = new ERROR.NODRAW();
-    parseCallback(parseError, null);
+  if( DUTILS.isNumeric( property ) ){
+    return _getNumber( +property );
+  }
+  else if(  isNumberRange( property ) ) {
+    var numberPromises = DUTILS.rangeArray( +property.start, +property.end-1 )
+      .map( _getNumber );
+    return Q.all( numberPromises );
+  }
+  //It is important to ensure that we don't have
+  //numeric values or ranges before we consider dates
+  //because we are not coercing numeric values to Dates
+  else if ( isDatish(property) ) {
+    return _getDate( MOMENT( property ) );
+  }
+  else if ( isDatishRange( property ) ) {
+    var startMoment = MOMENT( property.start );
+    var iter = startMoment.twix( property.end ).iterate( 'days' );
+    var datePromises = [];
+    for(var m=iter.next(); iter.hasNext(); m=iter.next()) {
+      datePromises.push(_getDate( m ) );
+    }
+    return Q.all( datePromises );
   }
   else {
-    tableHtml = html.substring(tableStartMatch.index, tableEndMatch.index + tableEndMatch[0].length);
-    jsdom.env(tableHtml, 
-        ['../lib/jquery.js'],//it turns out that using a local copy is faster
-        function(errors, window){
-          //TODO handle errors
-          var $ = window.$;
-          var wrappedTds = $('td');
-          var draw = {};
-          //TODO: encapsulate these into functions
-          //TODO: we probably didn't have to wrap these again
-          //	but it is the only way I know how for now
-          draw.number = +$(wrappedTds[2]).text().match(/\d+/g)[0];//we didn't need the 'g' i tink
-          draw.date = new Date($(wrappedTds[4]).text());
-          draw.numbersPlayed = $(wrappedTds[6]).text().match(/\d+/g).map(function(n){ return +n;});
-
-          draw.jackpot = $(wrappedTds[8]).text(); 
-          var jackpotMillionRegexp =  /.*\$(\d+)\s*Million/i;
-          var jackpotCommaRegexp = /(\d+[,\s]+)*(\d+)(\.\d+)?/g;
-          if(jackpotMillionRegexp.test(draw.jackpot)){
-            //TODO fix the following line what if the jackpot is 7 Million or just 7
-            //TODO  We should assume that a single digit jackpot, j, means a jackpot of jx10^6
-            draw.jackpot = draw.jackpot.replace(jackpotMillionRegexp, '$1000000');
-            draw.jackpot = +draw.jackpot;
-          }
-          else if(jackpotCommaRegexp.test(draw.jackpot)){
-            draw.jackpot = draw.jackpot.match(jackpotCommaRegexp)[0];
-            draw.jackpot = +draw.jackpot.replace(/[,\s]+/g, "");
-          }
-          else//format of jackpot unexpected
-          {
-            //TODO consider passing the partially parsed draw and the jackpot that gave the
-            //error in an Error object
-            var parseError = new ERROR.DRAWPARSE('unexpected format', tableHtml);
-            parseCallback(parseError, null);
-          }
-
-          draw.numberOfWinners = +$(wrappedTds[10]).text().match(/\d+/g)[0]; 
-          parseCallback(null, draw);
-        });
+    return Q.reject( new TypeError( 'Argument invalid') );
   }
 };
-*/
-
+exports.getDraw = getDraw;
+exports.MOMENT = MOMENT;
