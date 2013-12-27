@@ -25,6 +25,7 @@ var NLCBCONF = require('../config/nlcb-conf.json');
 //local libs
 var DUTILS = require('../lib/utils.js');
 
+/********************************Parser*************************************/
 /** 
  * a Draw is an Object with the following properties
  * number: the draw number
@@ -183,15 +184,17 @@ var _parseDrawHtml = function _parseDrawHtml( html ) {
   }
   return deferred.promise;
 };
+/********************************End Parser*********************************/
 
 /**
- * nlcbRequest: options -> promise
- * make http post request to nlcb.co.tt and return a promise
- * for the html sent back. Options specified in @param options.
- * @param options is an object with all the necessary properties
- * to pass to http.request.
+ * _requestHtml: options -> promise
+ * make http request and return a promise for the html sent back. Options
+ * specified in @param options.
+ *
+ * @param options an object with properties corresponding to the host, path, 
+ * query string, port, http verb, headers etc. for the request. 
  **/
-var _nlcbRequest = function nlcbRequest( options ) {
+var _requestHtml = function _requestHtml( options ) {
   var deferred = Q.defer();
   var httpRequest = HTTP.request( options, function( res ) {
     var html = "";
@@ -215,34 +218,19 @@ var _nlcbRequest = function nlcbRequest( options ) {
 }
 
 /**
- * _getHtml: Path, QueryObject -> promise
- * Consume a Path and a Query and makes a query to nlcb
- * for html at that path with the query arguments specfied
- * in QueryObjct, then returns a promise for this html.
- * @path the path to make the query to
- * @queryObject an object with properties for each query argument
- **/
-var _getHtml = function _getHtml( path, queryObject ) {
-  var options = Object.create( NLCBCONF );
-  options.path = path;
-  options.queryString = QUERYSTRING.stringify( queryObject );
-  return _nlcbRequest( options );
-};
-
-/**
- * _getParseHtml: Path, Object, string -> promise
- * Consume a path on nlcb an object with properties coresponding to query
- * parameters and a string and produce promise for a Draw represented by the
- * html returned by nlcb at that path and query parameters. If an error occurs
- * set the 'details' property of the error object to the string argument.
+ *_requestParseHtml: Object, string -> promise
+ * Consume an object with properties coresponding to query parameters and a 
+ * string and produce promise for a Draw represented by the html returned.
+ * If an error occurs set the 'details' property of the error object to the 
+ * string argument.
  *
- * @param path the path to make query to.
- * @QueryObject an object with properties for each query argument.
- * @errorDetails a string to assign to the details property of the error object
+ * @param options an object with properties corresponding to the host, path, 
+ * query string, port, http verb, headers etc. for the request. 
+ * @errorDetails a string to assign to the 'details' property of the error object
  * in case of error.
  **/
-var _getParseHtml = function _getParseHtml( path, queryObject, errorDetails ) {
-  return _getHtml( path, queryObject )
+var _requestParseHtml = function _requestParseHtml( options, errorDetails ) {
+  return _requestHtml( options )
     .then( _parseDrawHtml )
     .then( null, function( error ) {
       error.details = errorDetails;
@@ -257,9 +245,10 @@ var _getParseHtml = function _getParseHtml( path, queryObject, errorDetails ) {
  * @param number a NumericValue representing a draw number
  **/
 var _getNumber = function _getNumber( number) {
-  var path = '/search/lottoplus/FindDraw.php';
-  var queryObject = {drawno: number};
-  return _getParseHtml( path, queryObject, 'query made for draw number ' + number );
+  var options = Object.create( NLCBCONF );
+  options.path = '/search/lottoplus/FindDraw.php';
+  options.queryString = QUERYSTRING.stringify( {drawno: number} );
+  return _requestParseHtml( options, 'query made for draw number ' + number );
 };
 
 /**
@@ -269,13 +258,15 @@ var _getNumber = function _getNumber( number) {
  * @param number a Moment representing a draw date;
  **/
 var _getDate = function _getDate( moment ) {
-  var path = '/search/lottoplus/cashQuery.php';
+  var options = Object.create( NLCBCONF );
+  options.path = '/search/lottoplus/cashQuery.php';
   var queryObject= {
     day: moment.format( "DD" ), 
     month: moment.format( "MMM" ), 
     year: moment.format( "YY" )
   };
-  return _getParseHtml( path, queryObject, 'query made for ' + moment.toDate() );
+  options.queryString = QUERYSTRING.stringify( queryObject );
+  return _requestParseHtml( options, 'query made for ' + moment.toDate() );
 };
 
 /**
