@@ -29,5 +29,8 @@
     "jsdom": "~0.8.10",
     "mongoskin": "~0.6.1",
     "moment": "~2.5.0"
+  },
+  "devDependencies": {
+    "should": "~2.1.1"
   }
 }

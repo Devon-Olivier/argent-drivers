@@ -54,7 +54,7 @@ var DUTILS = require('../lib/utils.js');
  *  expect:
  *  {
  *    number: 1190,
- *    date: new Date('2013 12 1'),
+ *    date: new Date('2012 12 1'),
  *    numbersPlayed: [20, 25, 28, 32, 34, 8],
  *    jacpot: 4987528.04,
  *    numberOfWinners: 0
@@ -350,3 +350,7 @@ var getDraw = function getDraw(property) {
 };
 exports.getDraw = getDraw;
 exports.MOMENT = MOMENT;
+
+if(process.env.NODE_ENV==='dev') {
+  exports._parseDrawHtml = _parseDrawHtml;
+}
