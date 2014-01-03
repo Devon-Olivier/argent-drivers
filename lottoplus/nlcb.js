@@ -6,6 +6,8 @@
  * nlcb database 
  * Platform: node.js
  ***********************************************************/
+'use strict';
+
 var JQUERYPATH = '../lib/jquery.js';
 
 //native node modules
@@ -60,7 +62,7 @@ var DUTILS = require('../lib/utils.js');
  *    numberOfWinners: 0
  *  };
  **/
-var _parseDrawHtml = function _parseDrawHtml( html ) {
+var _parseDrawHtml = function _parseDrawHtml(html) {
 
   //We are receiving bad html which fails when wrapped 
   //by $ so we take out the table fragment and proceed
@@ -73,16 +75,16 @@ var _parseDrawHtml = function _parseDrawHtml( html ) {
    * @return the table html code fragment from the bad html if it exists or null
    * otherwise
    **/
-  var tableHtml = function tableHtml( theHtml ) {
-    var tableStartMatch = theHtml.match( /<\s*table/i );
-    var tableEndMatch = theHtml.match( /<\s*\/\s*table\s*>/i );
-    var tableCode = !tableStartMatch || !tableEndMatch ?
-      null:
-      theHtml.substring( tableStartMatch.index, 
-          tableEndMatch.index + tableEndMatch[0].length );
+  var tableHtml = function tableHtml(theHtml) {
+    var tableStartMatch = theHtml.match(/<\s*table/i),
+      tableEndMatch = theHtml.match(/<\s*\/\s*table\s*>/i),
+      tableCode = !tableStartMatch || !tableEndMatch ?
+          null :
+          theHtml.substring(tableStartMatch.index,
+            tableEndMatch.index + tableEndMatch[0].length);
     return tableCode;
-  };
-  
+  },
+
   /**
    * parse: Window -> Draw
    * consume Window object and produce a promise for a Draw represented
@@ -92,96 +94,89 @@ var _parseDrawHtml = function _parseDrawHtml( html ) {
    * jsdom.env call
    * @return Draw
    **/
-  var parse = function parse( window ) {
-    var parseNumber = function parseNumber( tds ) {
-      //TODO: we probably didn't have to wrap these again
-      //	but it is the only way I know how for now
-      var number = $( tds[2] ).text().match( /\d+/ );
-      if( null === number ){
-        throw ( new ERROR.DRAWPARSE('Unexpected draw number format') );
-      }
-      return +number[0];
-    };
+    parse = function parse(window) {
+      var $ = window.$, wrappedTds = $('td'),
+        parseNumber = function parseNumber(tds) {
+          //TODO: we probably didn't have to wrap these again
+          //but it is the only way I know how for now
+          var number = $(tds[2]).text().match(/\d+/);
+          if (null === number) {
+            throw new ERROR.DRAWPARSE('Unexpected draw number format');
+          }
+          return +number[0];
+        },
+        parseDate = function parseDate(tds) {
+          var date = MOMENT($(tds[4]).text());
+          if (date.isValid()) {
+            return date.toDate();
+          }
+          throw new ERROR.DRAWPARSE('Unexpected draw date format');
+        },
 
-    var parseDate = function parseDate( tds ) {
-      var date = MOMENT( $( tds[4] ).text() );
-      if( date.isValid() ) {
-        return date.toDate();;
-      }
-        throw ( new ERROR.DRAWPARSE('Unexpected draw date format') );
-    };
+        parseNumbersPlayed = function parseNumbersPlayed(tds) {
+          var numbersPlayed = $(tds[6]).text().match(/\d+/g);
+          if (null === numbersPlayed) {
+            throw new ERROR.DRAWPARSE('Unexpected draw number list format');
+          }
+          return numbersPlayed.map(function (n) { return +n; });
+        },
 
-    var parseNumbersPlayed = function parseNumbersPlayed( tds ) {
-      var numbersPlayed = $( tds[6] ).text().match( /\d+/g );
-      if( null === numbersPlayed ) {
-        throw ( new ERROR.DRAWPARSE('Unexpected draw number list format') );
-      }
-      return numbersPlayed.map( function( n ){ return +n;} );
-    };
+        parseJackopt = function parseJackopt(tds) {
+          var jackpot = $(tds[8]).text();
+          jackpot = jackpot.replace(/,\s*/g, '');
+          jackpot = jackpot.match(/\d+(\.\d+)?/);
+          if (!jackpot) {
+            throw new ERROR.DRAWPARSE('Unexpected draw jackpot format');
+          }
+          jackpot = +jackpot[0];
 
-    var parseJackopt = function parseJackopt( tds ) {
-      var jackpot = $( tds[8] ).text(); 
-      jackpot = jackpot.replace( /,\s*/g, '' );
-      jackpot = jackpot.match( /\d+(\.\d+)?/ );
-      if( !jackpot ) {
-        throw ( new ERROR.DRAWPARSE( 'Unexpected draw jackpot format' ) );
-      }
-      jackpot = +jackpot[0];
+          //sometimes nlcb reports jackpots less than 10 we assume that these
+          //are measured in millions
+          if (jackpot < 10) {
+            jackpot *= 1e6;
+          }
+          return jackpot;
+        },
 
-      //sometimes nlcb reports jackpots less than 10 we assume that these
-      //are measured in millions
-      if( jackpot < 10 ) {
-        jackpot *= 1e6;
-      }
-      return jackpot;
-    };
+        parseNumberOfWinners = function parseNumberWinners(tds) {
+          var number =  $(tds[10]).text().match(/\d+/);
+          if (null === number) {
+            throw (new ERROR.DRAWPARSE('Unexpected draw number of winners format'));
+          }
+          return +number;
+        };
 
-    var parseNumberOfWinners = function parseNumberWinners( tds ) {
-      var number =  $( tds[10] ).text().match( /\d+/ );
-      if( null === number ) {
-        throw ( new ERROR.DRAWPARSE( 'Unexpected draw number of winners format' ) );
+      if (wrappedTds.length < 10) {
+        throw (new ERROR.DRAWPARSE('Unexpected draw format'));
       }
-      return +number; 
-    };
-
-    var $ = window.$;
-    var wrappedTds = $( 'td' );
-    if( wrappedTds.length < 10 ) {
-      throw ( new ERROR.DRAWPARSE( 'Unexpected draw format' ) );
-    }
-    else {
       var draw = {};
-      draw.number = parseNumber( wrappedTds );
-      draw.date = parseDate( wrappedTds );
-      draw.numbersPlayed = parseNumbersPlayed( wrappedTds );
-      draw.jackpot = parseJackopt( wrappedTds );
-      draw.numberOfWinners = parseNumberOfWinners( wrappedTds );
-      return ( draw );
-    }
-  };
-
-  var deferred = Q.defer();
-  html = tableHtml( html );
+      draw.number = parseNumber(wrappedTds);
+      draw.date = parseDate(wrappedTds);
+      draw.numbersPlayed = parseNumbersPlayed(wrappedTds);
+      draw.jackpot = parseJackopt(wrappedTds);
+      draw.numberOfWinners = parseNumberOfWinners(wrappedTds);
+      return draw;
+    },
+    deferred = Q.defer();
+  html = tableHtml(html);
   //if we didn't get a table in the html we assume that
   //the draw does not exist.
-  if( null === html ) {
-    return Q.resolve( null );
+  if (null === html) {
+    return Q.resolve(null);
   }
-  else {
-    JSDOM.env( html, [JQUERYPATH], function( errors, window ) {
-      if( errors ) {
-        deferred.reject( errors );
+
+  JSDOM.env(html, [JQUERYPATH], function (errors, window) {
+    if (errors) {
+      deferred.reject(errors);
+    } else {
+      try {
+        deferred.resolve(parse(window));
+      } catch (e) {
+        deferred.reject(e);
       }
-      else {
-        try {
-          deferred.resolve( parse( window ) );
-        }
-        catch( e ) {
-          deferred.reject( e );
-        }
-      }
-    });
-  }
+    }
+  });
+
   return deferred.promise;
 };
 /********************************End Parser*********************************/
@@ -194,28 +189,28 @@ var _parseDrawHtml = function _parseDrawHtml( html ) {
  * @param options an object with properties corresponding to the host, path, 
  * query string, port, http verb, headers etc. for the request. 
  **/
-var _requestHtml = function _requestHtml( options ) {
-  var deferred = Q.defer();
-  var httpRequest = HTTP.request( options, function( res ) {
-    var html = "";
-    res.setEncoding( 'utf8' );
-    res.on('data', function( chunk ) {
-      html+=chunk;
+var _requestHtml = function _requestHtml(options) {
+  var deferred = Q.defer(),
+    httpRequest = HTTP.request(options, function (res) {
+      var html = "";
+      res.setEncoding('utf8');
+      res.on('data', function (chunk) {
+        html += chunk;
+      });
+
+      res.on('end', function () {
+        deferred.resolve(html);
+      });
     });
 
-    res.on( 'end', function(){
-      deferred.resolve(html);
-    });
+  httpRequest.on('error', function (e) {
+    var networkError = new ERROR.NETWORK('HTTP error', e);
+    deferred.reject(networkError);
   });
 
-  httpRequest.on( 'error',function( e ) {
-    var networkError = new ERROR.NETWORK( 'HTTP error', e );
-    deferred.reject( networkError );
-  });
-
-  httpRequest.end( options.queryString );
+  httpRequest.end(options.queryString);
   return deferred.promise;
-}
+};
 
 /**
  *_requestParseHtml: Object, string -> promise
@@ -229,10 +224,10 @@ var _requestHtml = function _requestHtml( options ) {
  * @errorDetails a string to assign to the 'details' property of the error object
  * in case of error.
  **/
-var _requestParseHtml = function _requestParseHtml( options, errorDetails ) {
-  return _requestHtml( options )
-    .then( _parseDrawHtml )
-    .then( null, function( error ) {
+var _requestParseHtml = function _requestParseHtml(options, errorDetails) {
+  return _requestHtml(options)
+    .then(_parseDrawHtml)
+    .then(null, function (error) {
       error.details = errorDetails;
       throw error;
     });
@@ -244,11 +239,11 @@ var _requestParseHtml = function _requestParseHtml( options, errorDetails ) {
  * a number property corresponding to that NumericValue.
  * @param number a NumericValue representing a draw number
  **/
-var _getNumber = function _getNumber( number) {
-  var options = Object.create( NLCBCONF );
+var _getNumber = function _getNumber(number) {
+  var options = Object.create(NLCBCONF);
   options.path = '/search/lottoplus/FindDraw.php';
-  options.queryString = QUERYSTRING.stringify( {drawno: number} );
-  return _requestParseHtml( options, 'query made for draw number ' + number );
+  options.queryString = QUERYSTRING.stringify({drawno: number});
+  return _requestParseHtml(options, 'query made for draw number ' + number);
 };
 
 /**
@@ -257,16 +252,16 @@ var _getNumber = function _getNumber( number) {
  * property corresponding to that Moment.
  * @param number a Moment representing a draw date;
  **/
-var _getDate = function _getDate( moment ) {
-  var options = Object.create( NLCBCONF );
+var _getDate = function _getDate(moment) {
+  var options = Object.create(NLCBCONF);
   options.path = '/search/lottoplus/cashQuery.php';
-  var queryObject= {
-    day: moment.format( "DD" ), 
-    month: moment.format( "MMM" ), 
-    year: moment.format( "YY" )
+  var queryObject = {
+    day: moment.format("DD"),
+    month: moment.format("MMM"),
+    year: moment.format("YY")
   };
-  options.queryString = QUERYSTRING.stringify( queryObject );
-  return _requestParseHtml( options, 'query made for ' + moment.toDate() );
+  options.queryString = QUERYSTRING.stringify(queryObject);
+  return _requestParseHtml(options, 'query made for ' + moment.toDate());
 };
 
 /**
@@ -293,7 +288,7 @@ var _getDate = function _getDate( moment ) {
  *
  * If the DrawProperty is an object with properties 'start' and 'end', that are
  * both coerceable to a Date, return a promise for an array of Draws whose date
- * property is in the range [Date(start), Date(end) ).
+ * property is in the range [Date(start), Date(end)).
  *
  * If the DrawProperty is a Date, return a promise for the draw on that date.
  *
@@ -303,54 +298,55 @@ var _getDate = function _getDate( moment ) {
  **/
 var getDraw = function getDraw(property) {
 
-  var isNumberRange = function isNumberRange( value ) {
-    return DUTILS.isNumeric( value.start ) && DUTILS.isNumeric( value.end );
+  var isNumberRange = function isNumberRange(value) {
+    return DUTILS.isNumeric(value.start) && DUTILS.isNumeric(value.end);
   };
 
-  var isDatish = function isDatish( value ) {
-    if( 'object' === typeof( value ) ) {
-      if( Array.isArray( value ) ) {
-        return MOMENT( value ).isValid();
+  var isDatish = function isDatish(value) {
+    if ('object' === typeof value) {
+      if (Array.isArray(value)) {
+        return MOMENT(value).isValid();
       }
       return value instanceof Date;
     }
-    return MOMENT( value ).isValid();
+    return MOMENT(value).isValid();
   };
 
-  var isDatishRange = function isDatishRange( value ) {
-    return isDatish( value.start ) &&  isDatish( value.end );
+  var isDatishRange = function isDatishRange(value) {
+    return isDatish(value.start) &&  isDatish(value.end);
   };
 
-  if( DUTILS.isNumeric( property ) ){
-    return _getNumber( +property );
+  if (DUTILS.isNumeric(property)) {
+    return _getNumber(+property);
   }
-  else if(  isNumberRange( property ) ) {
-    var numberPromises = DUTILS.rangeArray( +property.start, +property.end-1 )
-      .map( _getNumber );
-    return Q.all( numberPromises );
+
+  if (isNumberRange(property)) {
+    var numberPromises = DUTILS.rangeArray(+property.start, +property.end - 1)
+      .map(_getNumber);
+    return Q.all(numberPromises);
   }
   //It is important to ensure that we don't have
   //numeric values or ranges before we consider dates
   //because we are not coercing numeric values to Dates
-  else if ( isDatish(property) ) {
-    return _getDate( MOMENT( property ) );
+  if (isDatish(property)) {
+    return _getDate(MOMENT(property));
   }
-  else if ( isDatishRange( property ) ) {
-    var startMoment = MOMENT( property.start );
-    var iter = startMoment.twix( property.end ).iterate( 'days' );
+
+  if (isDatishRange(property)) {
+    var startMoment = MOMENT(property.start);
+    var iter = startMoment.twix(property.end).iterate('days');
     var datePromises = [];
-    for(var m=iter.next(); iter.hasNext(); m=iter.next()) {
-      datePromises.push(_getDate( m ) );
+    for (var m=iter.next(); iter.hasNext(); m=iter.next()) {
+      datePromises.push(_getDate(m));
     }
-    return Q.all( datePromises );
+    return Q.all(datePromises);
   }
-  else {
-    return Q.reject( new TypeError( 'Argument invalid') );
-  }
+
+  return Q.reject(new TypeError('Argument invalid'));
 };
 exports.getDraw = getDraw;
 exports.MOMENT = MOMENT;
 
-if(process.env.NODE_ENV==='dev') {
+if (process.env.NODE_ENV==='dev') {
   exports._parseDrawHtml = _parseDrawHtml;
 }
