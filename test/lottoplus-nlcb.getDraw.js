@@ -4,6 +4,8 @@ var MOMENT = nlcbLottoplusDriver.MOMENT;
 
 var stringDateStart = "2012 12 1";
 var dateStart = new Date(stringDateStart);
+var arrayDateStart = [2012, 11, 1];
+
 var stringDateEnd = "2012 12 6";
 var dateEnd = new Date(stringDateEnd);
 
@@ -26,6 +28,21 @@ var expectedDraws = [{
   numbersPlayed: [7, 15, 16, 24, 32, 5],
   jackpot: 5649713.5,
   numberOfWinners: 0}];
+
+describe('nlcbLottoplusDriver', function() {
+  describe('#getDraw(invalidProperty)', function() {
+    it('should throw error for invalid argument', function(done) {
+      nlcbLottoplusDriver.getDraw('lol')
+      .then(function (value) {
+        SHOULD.not.exist(value);
+        done();
+      }, function (error) {
+        error.should.be.an.instanceof(TypeError);
+        done();
+      }).done();
+    });
+  });
+});
 
 describe('nlcbLottoplusDriver', function() {
   describe('#getDraw(stringDate)', function() {
@@ -146,3 +163,16 @@ describe('nlcbLottoplusDriver', function() {
     });
   });
 });
+
+describe('nlcbLottoplusDriver', function() {
+  describe('#getDraw(datAsArray)', function() {
+    it('should accept ranges with array representation of a date', function(done) {
+      nlcbLottoplusDriver.getDraw(arrayDateStart)
+      .then(function(draws) {
+        draws.should.eql(expectedDraws[0]);
+        done(); 
+      }).done();
+    });
+  });
+});
+
