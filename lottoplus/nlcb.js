@@ -303,6 +303,9 @@ var getDraw = function getDraw(property) {
   };
 
   var isDatish = function isDatish(value) {
+    if (null === value || undefined === value) {
+      return false;
+    }
     if ('object' === typeof value) {
       if (Array.isArray(value)) {
         return MOMENT(value).isValid();
@@ -342,7 +345,9 @@ var getDraw = function getDraw(property) {
     return Q.all(datePromises);
   }
 
-  return Q.reject(new TypeError('Argument invalid'));
+  return Q.fcall(function () {
+    throw new TypeError('Argument invalid');
+  });
 };
 exports.getDraw = getDraw;
 exports.MOMENT = MOMENT;
