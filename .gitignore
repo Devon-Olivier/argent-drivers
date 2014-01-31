@@ -4,3 +4,4 @@
 drivertest.js
 /node_modules
 /config
+.jshintrc
