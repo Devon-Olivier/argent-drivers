@@ -26,6 +26,7 @@ var NLCBCONF = require('../config/nlcb-conf.json');
 
 //local libs
 var DUTILS = require('../lib/utils.js');
+var IS = require('../lib/is.js');
 
 /********************************Parser*************************************/
 /** 
@@ -297,33 +298,11 @@ var _getDate = function _getDate(moment) {
  * range [start, end).
  **/
 var getDraw = function getDraw(property) {
-
-  var isNumberRange = function isNumberRange(value) {
-    return DUTILS.isNumeric(value.start) && DUTILS.isNumeric(value.end);
-  };
-
-  var isDatish = function isDatish(value) {
-    if (null === value || undefined === value) {
-      return false;
-    }
-    if ('object' === typeof value) {
-      if (Array.isArray(value)) {
-        return MOMENT(value).isValid();
-      }
-      return value instanceof Date;
-    }
-    return MOMENT(value).isValid();
-  };
-
-  var isDatishRange = function isDatishRange(value) {
-    return isDatish(value.start) &&  isDatish(value.end);
-  };
-
   if (DUTILS.isNumeric(property)) {
     return _getNumber(+property);
   }
 
-  if (isNumberRange(property)) {
+  if (IS.numberRange(property)) {
     var numberPromises = DUTILS.rangeArray(+property.start, +property.end - 1)
       .map(_getNumber);
     return Q.all(numberPromises);
@@ -331,11 +310,11 @@ var getDraw = function getDraw(property) {
   //It is important to ensure that we don't have
   //numeric values or ranges before we consider dates
   //because we are not coercing numeric values to Dates
-  if (isDatish(property)) {
+  if (IS.datish(property)) {
     return _getDate(MOMENT(property));
   }
 
-  if (isDatishRange(property)) {
+  if (IS.datishRange(property)) {
     var startMoment = MOMENT(property.start);
     var iter = startMoment.twix(property.end).iterate('days');
     var datePromises = [];
