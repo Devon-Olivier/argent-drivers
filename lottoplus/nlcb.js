@@ -39,7 +39,7 @@ var IS = require('../lib/is.js');
  **/
 
 /**
- * _parsDrawHtml: String -> promis
+ * _parsDrawHtml: String -> promise
  * @param html the html returned from an http post request to nlcb.co.tt/search/<...>
  * @return a promise for a Draw representing the draw from html. If the draw does
  * not exist then the promise gets resolved with null.
