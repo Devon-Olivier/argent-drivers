@@ -7,245 +7,202 @@
  * Platform: node.js
  ***********************************************************/
 'use strict';
-//TODO give these names that would make them easily distinguishable
-//as globals
-//native modules
-//var http = require('http');
-//var events = require('events');
 
 //external modules
-//var moment = require('moment');
-var mongoskin = require('mongoskin');
+var Q = require('q');
+var MONGODB = require('mongodb');
+var MOMENT = require('moment');
 
 //local modules
-var secretaryMaker = require('../lib/secretary.js');
-var devonUtil = require('../lib/utils.js');
-var ERROR = require('../lib/errors.js');
+var DUTILS = require('../lib/utils.js');
+var IS = require('../lib/is.js');
+      
+/** 
+ * a Draw is an Object with the following properties
+ * number: the draw number
+ * date: Date object representing the date for this draw
+ * numbersPlayed: an array of numbers played for this draw
+ * jackpot: a number representing the jackpot for this draw
+ * numberOfWinners: a number representing the number of winners for the draw
+ **/
 
-/************************************************************
- * TODO fix docs
- * storeDraws(draws, storeDrawsCallback) stores all the draws in draws in the
- * associated database.
- *
- * @param draws an array of draw objects.
- *
- * @param storeDrawsCallback is called with after the store is complete with
- * an error object, which is null if no errors occured during the attempted 
- * store.
- *
- * getDrawDateRange(range, drawDateRangeCallback) calls 
- * drawDateRangeCallback with the draws whose dates are 
- * within the range specified by 'range'. The draws passed on to 
- * drawDateRangeCallback shall have dates greater than or equal to
- * the start boundary of the range, and less than the end
- * boundary of the range. i.e. all dates in [start, end).
- * 
- * @param range is an object with properties 'start' and 'end'.
- * Each of these is an object is a Moment 
- * see http://momentjs.com/docs/. The 'start' Moment represents
- * the start boundary of the date range and the 'end' Moment
- * represents the end boundary of the date range.
- * 
- * @param drawDateRangeCallback is called with an array 
- * containing the draws with dates in range if one exists
- * and [] otherwise.
- *
- *
- * getDrawNumberRange calls drawNumberRangeCallback with the draws 
- * whose numbers are within the range specified by 'range'. The 
- * draws passed on to drawNumberRangeCallback shall have numbers 
- * greater than or equal to the start boundary of the range, and 
- * less than the end boundary of the range. i.e. all draw numbers in 
- * [start, end).
- *
- * @param range is an object with properties 'start' and 'end'
- * representing the start and end boundaries of the range
- * respectively.
- *
- * @param drawNumberRangeCallback is called with an array containing 
- * the draws with numbers in range if one exists and [] 
- * otherwise.
- *
- *
- * close closes the database connection
- ***********************************************************/
-exports.createDriver = function createDriver(options){
-  var _mongoConnectionString = "";
+/**
+ * _getDrawArray: MongoCollection MongoQueryObject -> promise for an array of draws
+ **/
+var _getDrawArray = function _getDrawArray (collection, queryObject) {
+  return Q.invoke(collection, 'find', queryObject, {fields: {_id:0}})
+    .then(function (cursor) {
+      //console.log('got cursor');
+      var deferred = Q.defer();
+      var array = [];
+      var stream = cursor.stream();
 
-  if(!options.username){
-    _mongoConnectionString = "mongodb://" + options.address;
-  }
-  else{
-    //TODO if no password what should we do??
-    _mongoConnectionString = "mongodb://" +
-      options.username +
-      ":" +
-      options.password +
-      "@" + 
-      options.address;
-  }
+      stream.on('data', function (data) {
+        array.push(data);
+      });
+
+      stream.on('error', function(error) {
+        deferred.reject(error);
+      });
+
+      stream.on('end', function () {
+        deferred.resolve(array);
+      });
+      return deferred.promise;
+    });
+};
+
+/**
+ * _getDraw: MongoCollection MongoQueryObject -> promise for a draw
+ **/
+var _getDraw = function _getDraw (collection, queryObject) {
+  var deferred = Q.defer();
+  collection.findOne(queryObject, {fields: {_id:0}}, function(error, draw) {
+    if(error) {
+      deferred.reject(error);
+    }
+    else {
+      deferred.resolve(draw);
+    }
+  });
+  return deferred.promise;
   
-  //TODO we should check whether the database correctly opens connection
-  var _lottoplusDB = mongoskin.db(_mongoConnectionString);
+  //NOT SURE WHY THIS IS NOT WORKING
+  //return Q.invoke(collection, 'findOne', queryObject, {fields: {_id:0}})
+  //  .then(function (cursor) {
+  //    return cursor;
+  //  });
+};
 
-  var _adapter = Object.create(secretaryMaker.createSecretary());
+/**
+ * DrawProperty is any one of the following types:
+ *  number
+ *  string
+ *  Date
+ *  MOMENT?(considering)
+ *  object (with start and end properties of the previous types)
+ *
+ * getDraw: DrawProperty -> promise
+ * Consume a DrawProperty of a set of draws return a promise for those draws
+ * specified by the DrawProperty.
+ *
+ * If the DrawProperty is a number return a promise for the draw with that number
+ * property.
+ * 
+ * If the DrawProperty is an object with properties 'start' and 'end', which are
+ * numbers, return a promise for an array of Draws whose number property is
+ * in the range [start, end).
+ *
+ * If the DrawProperty is a string that is coerceable to a Date, return a promise
+ * for the draw with that date property.
+ *
+ * If the DrawProperty is an object with properties 'start' and 'end', that are
+ * both coerceable to a Date, return a promise for an array of Draws whose date
+ * property is in the range [Date(start), Date(end)).
+ *
+ * If the DrawProperty is a Date, return a promise for the draw on that date.
+ *
+ * If the DrawProperty is an object with properties 'start' and 'end', that are
+ * Dates, return a promise for an array of Draws whose date property is in the 
+ * range [start, end).
+ **/
+var getDraw = function (property) {
+  return Q.ninvoke(
+      MONGODB.MongoClient,
+      'connect',
+      'mongodb://localhost/lottoplus',
+      {w:1})
+    .then(function (db) {
+      //console.log('got db');
+      return Q.ninvoke(db, 'collection', 'draws')
+        .then(function (collection) {
+          //console.log('got collection');
+          var queryObject = null;
+          if (DUTILS.isNumeric(property)) {
+            queryObject = {number: +property};
+            return _getDraw(collection, queryObject)
+              .then(function (draw) {
+                db.close();
+                return draw;
+              },
+              function (error) {
+                db.close();
+                throw error;
+              });
+          }
 
+          if (IS.numberRange(property)) {
+            queryObject = {number: {$gte: +property.start, $lt: +property.end}};
+            return _getDrawArray(collection, queryObject)
+              .then(function (draws) {
+                db.close();
+                return draws;
+              },
+              function (error) {
+                db.close();
+                throw error;
+              });
+          }
 
-  //TODO getDrawDateRange and getDrawNumberRange have common logic
-  //ABSTRACT AWAY!!
-  _adapter.getDrawDate = function getDrawDate(aMoment, drawDateCallback){
-    var date = aMoment.toDate();
-    var queryObject = {'date': date};
-    var job = function(jobCallback){
-      _lottoplusDB.collection('draws').findOne(queryObject, function findCallback(error, draw){
-        if(error){
-          jobCallback(new ERROR.DATABASE('mongo query error', error), null);
-          return;
-        }
-        if(draw === null){
-          jobCallback(new ERROR.NODRAW('draw does not exist', date), null);
-          return;
-        }
-        jobCallback(null, draw);
-      });
-    };
-    this.doJob(job, drawDateCallback);
-  };
+          //It is important to ensure that we don't have
+          //numeric values or ranges before we consider dates
+          //because we are not coercing numeric values to Dates
+          if (IS.datish(property)) {
+            queryObject = {date: MOMENT(property).toDate()};
+            return _getDraw(collection, queryObject)
+              .then(function (draws) {
+                db.close();
+                return draws;
+              },
+              function (error) {
+                db.close();
+                throw error;
+              });
+          }
 
-  _adapter.getDrawDateRange = function getDrawDateRange(range, drawDateRangeCallback){
-    //TODO: ensure that range is correct type
-    var startDate = range.start.toDate();
-    var endDate = range.end.toDate();
-    var drawDateRangeCallbackError = null;
+          if (IS.datishRange(property)) {
+            var startMoment = MOMENT(property.start);
+            var endMoment = MOMENT(property.end);
+            
+            queryObject = {date: {$gte: startMoment.toDate(), $lt: endMoment.toDate()}};
+            return _getDrawArray(collection, queryObject)
+              .then(function (draws) {
+                db.close();
+                return draws;
+              },
+              function (error) {
+                db.close();
+                throw error;
+              });
+          }
 
-    var queryObject = {'date': {$gte: startDate, $lt: endDate}};
-    var job = function(callback){
-      _lottoplusDB.collection('draws').find(queryObject, function findCallback(error, findCursor){
-        console.log('draws.find: ', error);
-        if(error){
-          drawDateRangeCallbackError = new ERROR.DATABASE('mongodb query error', error);
-          callback(drawDateRangeCallbackError, null); 
-        }
-        else{
-          findCursor.toArray(function toArrayCallback(error, draws){
-            console.log('toArray error: ', error);
-            if(error){
-              drawDateRangeCallbackError = new ERROR.DATABASE('mongodb query error', error);
-              callback(drawDateRangeCallbackError, null); 
-              return;
-            }
-
-            if(draws.length === 0){
-              drawDateRangeCallbackError = new ERROR.NODRAWSINRANGE('All draws in range do not exist', range);
-              callback(drawDateRangeCallbackError, null); 
-              return;
-            }
-            callback(drawDateRangeCallbackError, draws); 
-          });
-          //TODO what other errors?
-        }
-      });
-    };
-    this.doJob(job, drawDateRangeCallback);
-  };
-
-  _adapter.getDrawNumber = function getDrawNumber(number, drawNumberCallback){
-    var queryObject = {'number': number};
-    var job = function(jobCallback){
-      _lottoplusDB.collection('draws').findOne(queryObject, function findCallback(error, draw){
-        if(error){
-          jobCallback(new ERROR.DATABASE('mongo query error', error), null);
-          return;
-        }
-        if(draw === null){
-          jobCallback(new ERROR.NODRAW('draw does not exist', number), null);
-          return;
-        }
-        jobCallback(null, draw);
-      });
-    };
-    this.doJob(job, drawNumberCallback);
-  };
-
-  _adapter.getDrawNumberRange = function getDrawNumberRange(range, drawNumberRangeCallback){
-    //TODO: we should make sure the start and end are positive INTEGERS
-    var rangeStart = +range.start;
-    var rangeEnd = +range.end;
-    var drawNumberRangeCallbackError = null;
-
-    //TODO consider using an assert library or something here and disable it in production code
-    if(!devonUtil.isNumber(rangeStart)  || rangeStart <= 0){
-      throw new TypeError("'range.start' should be coerceable to a number");
-    }
-    else{
-      if(!devonUtil.isNumber(rangeEnd) || rangeStart <= 0){
-        throw new TypeError("'range.end' should be coerceable to a number");
-      }
-      else{
-        var queryObject = {'number': {$gte: rangeStart, $lt: rangeEnd}};
-
-        var job = function(callback){
-          _lottoplusDB.collection('draws').find(queryObject).toArray(function toArrayCallback(error, draws){
-            if(error){
-              drawNumberRangeCallbackError = new ERROR.DATABASE('mongodb query error', error);
-            }
-            else{
-              if(draws.length === 0){
-                drawNumberRangeCallbackError = new ERROR.NODRAWSINRANGE('All draws in range do not exist', range);
-              }
-            }
-          callback(drawNumberRangeCallbackError, draws); 
-          });
-        };
-        this.doJob(job, drawNumberRangeCallback);
-      }
-    }
-  };
-
-  //TODO handle errors
-  _adapter.storeDraws = function(draws, storeDrawsCallback){
-    var job = function(callback){
-      _lottoplusDB.collection('draws').insert(draws, callback);
-    };
-    this.doJob(job, storeDrawsCallback);
-  };
-
-  //TODO consider treating driver as a state machine.
-  //States include disconnected, querying, disconnecting...
-  var _closed = false;
-  var _setUpToClose = false;//are we waiting for an event to happen in order to close
-  _adapter.close= function(closeCallback){
-    if(_closed){
-      //console.log("[mongo adapter]: database closed already");
-      closeCallback();
-    }
-    else{
-      //console.log("[mongo adapter]: database not closed");
-      if(!this.hasMoreJobs()){
-        //console.log("[mongo adapter]: no more queries going to close database now");
-        _lottoplusDB.close(function(){
-          _closed = true;
-          //console.log("[mongo adapter]: database closed");
-          closeCallback();
+          throw new TypeError('Argument invalid');
         });
-      }
-      else{
-        //if not setup to close already do so now
-        if(!_setUpToClose){//
-          //console.log("[mongo adapter]: setting up adapter to close connection");
-          this.once('no more jobs', function(){
-            //console.log("[mongo adapter]: adapter not setup to close any more");
-            _setUpToClose = false;
-            this.close(closeCallback);
+    });
+};
+
+var saveDraw = function saveDraw (draws) {
+  return Q.ninvoke(
+      MONGODB.MongoClient,
+      'connect',
+      'mongodb://localhost/lottoplus',
+      {w:1})
+    .then(function (db) {
+      return Q.ninvoke(db, 'collection', 'draws')
+        .then(function (collection) {
+          var deferred = Q.defer();
+          collection.insert(draws, {w:1}, function (error, savedDraws) {
+            if (error) {
+              deferred.reject(error);
+            }
+            else {
+              deferred.resolve(savedDraws);
+            }
           });
-          //console.log("[mongo adapter]: adapter setup to close");
-          _setUpToClose = true;
-        }
-        else{
-          //console.log("[mongo adapter]: adapter already setup to close");
-        }
-      }
-    }
-  }; 
-  return _adapter; 
-}; 
+          return deferred.promise;
+        });
+    });
+};
+exports.getDraw = getDraw;
+exports.saveDraw = saveDraw;
+exports.MOMENT = MOMENT;
