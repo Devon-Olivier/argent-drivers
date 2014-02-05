@@ -1,7 +1,7 @@
 /************************************************************
  * File: lottoplus.mongo.js
  * Author: Devon Olivier
- * Year: 2012
+ * Year: 2014
  * Purpose: Manages connections and CRUD requests to the lottoplus
  *          mongo database 
  * Platform: node.js
@@ -17,6 +17,7 @@ var MOMENT = require('moment');
 var DUTILS = require('../lib/utils.js');
 var IS = require('../lib/is.js');
       
+var MONGOCONF = require('../config/mongo-conf.json');
 /** 
  * a Draw is an Object with the following properties
  * number: the draw number
@@ -32,7 +33,6 @@ var IS = require('../lib/is.js');
 var _getDrawArray = function _getDrawArray (collection, queryObject) {
   return Q.invoke(collection, 'find', queryObject, {fields: {_id:0}})
     .then(function (cursor) {
-      //console.log('got cursor');
       var deferred = Q.defer();
       var array = [];
       var stream = cursor.stream();
@@ -86,11 +86,11 @@ var _getDraw = function _getDraw (collection, queryObject) {
  * Consume a DrawProperty of a set of draws return a promise for those draws
  * specified by the DrawProperty.
  *
- * If the DrawProperty is a number return a promise for the draw with that number
+ * If the DrawProperty is numeric return a promise for the draw with that number
  * property.
  * 
  * If the DrawProperty is an object with properties 'start' and 'end', which are
- * numbers, return a promise for an array of Draws whose number property is
+ * numeric, return a promise for an array of Draws whose number property is
  * in the range [start, end).
  *
  * If the DrawProperty is a string that is coerceable to a Date, return a promise
@@ -100,48 +100,37 @@ var _getDraw = function _getDraw (collection, queryObject) {
  * both coerceable to a Date, return a promise for an array of Draws whose date
  * property is in the range [Date(start), Date(end)).
  *
- * If the DrawProperty is a Date, return a promise for the draw on that date.
- *
- * If the DrawProperty is an object with properties 'start' and 'end', that are
- * Dates, return a promise for an array of Draws whose date property is in the 
- * range [start, end).
+ * else produce TypeError on property
  **/
 var getDraw = function (property) {
   return Q.ninvoke(
       MONGODB.MongoClient,
       'connect',
-      'mongodb://localhost/lottoplus',
+      MONGOCONF.uri,
       {w:1})
     .then(function (db) {
-      //console.log('got db');
+      var doQuery = function (queryFunc, collection, queryObject) {
+        return queryFunc(collection, queryObject)
+          .then(function (draws) {
+            db.close();
+            return draws;
+          },
+          function (error) {
+            db.close();
+            throw error;
+          });
+      };
       return Q.ninvoke(db, 'collection', 'draws')
         .then(function (collection) {
-          //console.log('got collection');
           var queryObject = null;
           if (DUTILS.isNumeric(property)) {
             queryObject = {number: +property};
-            return _getDraw(collection, queryObject)
-              .then(function (draw) {
-                db.close();
-                return draw;
-              },
-              function (error) {
-                db.close();
-                throw error;
-              });
+            return doQuery(_getDraw, collection, queryObject);
           }
 
           if (IS.numberRange(property)) {
             queryObject = {number: {$gte: +property.start, $lt: +property.end}};
-            return _getDrawArray(collection, queryObject)
-              .then(function (draws) {
-                db.close();
-                return draws;
-              },
-              function (error) {
-                db.close();
-                throw error;
-              });
+            return doQuery(_getDrawArray, collection, queryObject);
           }
 
           //It is important to ensure that we don't have
@@ -149,15 +138,7 @@ var getDraw = function (property) {
           //because we are not coercing numeric values to Dates
           if (IS.datish(property)) {
             queryObject = {date: MOMENT(property).toDate()};
-            return _getDraw(collection, queryObject)
-              .then(function (draws) {
-                db.close();
-                return draws;
-              },
-              function (error) {
-                db.close();
-                throw error;
-              });
+            return doQuery(_getDraw, collection, queryObject);
           }
 
           if (IS.datishRange(property)) {
@@ -165,15 +146,7 @@ var getDraw = function (property) {
             var endMoment = MOMENT(property.end);
             
             queryObject = {date: {$gte: startMoment.toDate(), $lt: endMoment.toDate()}};
-            return _getDrawArray(collection, queryObject)
-              .then(function (draws) {
-                db.close();
-                return draws;
-              },
-              function (error) {
-                db.close();
-                throw error;
-              });
+            return doQuery(_getDrawArray, collection, queryObject);
           }
 
           throw new TypeError('Argument invalid');
@@ -185,7 +158,7 @@ var saveDraw = function saveDraw (draws) {
   return Q.ninvoke(
       MONGODB.MongoClient,
       'connect',
-      'mongodb://localhost/lottoplus',
+      MONGOCONF.uri,
       {w:1})
     .then(function (db) {
       return Q.ninvoke(db, 'collection', 'draws')
@@ -198,11 +171,34 @@ var saveDraw = function saveDraw (draws) {
             else {
               deferred.resolve(savedDraws);
             }
+            db.close();
           });
           return deferred.promise;
         });
     });
 };
+
+var removeDraw = function removeDraw (queryObject) {
+  return Q.ninvoke(
+      MONGODB.MongoClient,
+      'connect',
+      MONGOCONF.uri,
+      {w:1})
+    .then(function (db) {
+      var deferred = Q.defer();
+      db.collection('draws').remove(queryObject, {w:1}, function (error, n) {
+        if (error) {
+          deferred.reject(error);
+        }
+        else {
+          deferred.resolve(n);
+        }
+        db.close();
+      });
+      return deferred.promise;
+    });
+}; 
 exports.getDraw = getDraw;
 exports.saveDraw = saveDraw;
+exports.removeDraw = removeDraw;
 exports.MOMENT = MOMENT;
