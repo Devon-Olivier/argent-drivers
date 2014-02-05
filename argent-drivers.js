@@ -1,14 +1,11 @@
-var nlcbLottoplusDriver = require('./lottoplus/nlcb.js');
-var mongoLottoplusDriver = require('./lottoplus/mongo.js');
+var nlcb = require('./lottoplus/nlcb.js');
+var mongo = require('./lottoplus/mongo.js');
 var errors = require('./lib/errors.js');
 
-var moment = require('moment');
-
 var lottoplus = {
-  nlcb: nlcbLottoplusDriver,
-  mongo: mongoLottoplusDriver
+  nlcb: nlcb,
+  mongo: mongo
 };
 
 exports.lottoplus = lottoplus;
-exports.moment = moment;
 exports.errors = errors;
