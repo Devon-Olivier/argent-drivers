@@ -1,10 +1,10 @@
 {
   "name": "argent-drivers",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Drivers to lottoplus database stores.",
   "main": "argent-drivers.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=dev mocha"
   },
   "repository": {
     "type": "git",
