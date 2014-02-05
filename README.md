@@ -22,7 +22,7 @@ Drivers to lottoplus database stores.
 
 ###Usage
 
-The lottoplus driver factories are in
+The lottoplus drivers
 ```js
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 ```
@@ -31,336 +31,98 @@ We are expecting to have others such as playwhe and cashpot.
 #### `.lottoplus.nlcb`
 Scrapes nlcb.co.tt for lottoplus draws.
 
-Get a scraper:
-```js
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
-```
 ####Methods of the scraper
 
-#### `.getDrawDate(aMoment, drawDateCallback)`
+#### `.getDraw(drawProperty)`
+
+DrawProperty is any one of the following types:
+ number
+ string
+ Date
+ object (with `start` and `end` properties of the previous types)
+
+getDraw: DrawProperty -> promise
+Consume a DrawProperty of a set of draws return a promise for those draws
+specified by the DrawProperty.
+
+If the DrawProperty is numeric return a promise for the draw with that number
+property.
+
+If the DrawProperty is an object with properties `start` and `end`, which are
+numeric, return a promise for an array of Draws whose number property is
+in the range \[start, end).
+
+If the DrawProperty is a string that is coerceable to a Date, return a promise
+for the draw with that date property.
+
+If the DrawProperty is an object with properties `start` and `end`, that are
+both coerceable to a Date, return a promise for an array of Draws whose date
+property is in the range \[Date(start), Date(end)).
+
+else produce TypeError on property
 
 Get draw of a given date:
-
-`getDrawDate`(`aMoment`, `drawDateCallback`) calls `drawDateCallback`
-with the draw whose date is equal to the one specified by `aMoment`.
-
-`aMoment` is an instance of Moment---see [.moment](#moment).
-
-`drawDateRangeCallback` is called with an error object, which
-is null if no error occured, and a draw with the specified date. 
 
 The following prints the draw for 1 December, 2012.
 ```js
 #! /usr/bin/env node
-var argentDrivers = require('argent-drivers');
-var lottoplusDrivers = argentDrivers.lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
-var moment = argentDrivers.moment;
-
-var date = moment('2012 12 1', 'YYYY MM DD');
-nlcbLottoplusDriver.getDrawDate(date, function(error, draw){
-  if(error){
-    console.log(error);
-    return;
-  }
-  console.log(draw);
-});
+var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
+lottoNlcb.getDraw('2012 12 1').then(console.log, console.error);
 ```
-#### `.getDrawDateRange(range, drawDateRangeCallback)`
 
 Get draws in given date-range:
-
-`getDrawDateRange`(`range`, `drawDateRangeCallback`) calls 
-`drawDateRangeCallback` with the draws whose dates are 
-within the range specified by `range`. The draws passed on to 
-`drawDateRangeCallback` shall have dates greater than or equal to
-the start boundary of the range, and less than the end
-boundary of the range. i.e. all dates in \[`start`, `end`).
-
-`range` is an object with properties `start` and `end`.
-Each of these is an instance of Moment---see [.moment](#moment).
-The `start` Moment represents the start boundary of the date range and 
-the `end` Moment represents the end boundary of the date range.
-
-`drawDateRangeCallback` is called with an error object, which
-is null if no error occured, and an array containing the 
-draws with dates in range that could have been retrieved.
 
 The following prints all draws in December 2012.
 ```js
 #! /usr/bin/env node
-var argentDrivers = require('argent-drivers');
-var lottoplusDrivers = argentDrivers.lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
-var moment = argentDrivers.moment;
+var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
 
 var range = {
-  start: moment('2012 12 1', 'YYYY MM DD'),
-  end: moment('2013 1 1', 'YYYY MM DD')
+  start: '2012 12 1',
+  end: '2013 1 1'
 };
 
-nlcbLottoplusDriver.getDrawDateRange(range, function(error, draws){
-  if(error){
-    console.log(error);
-    return;
-  }
-  draws.forEach(function(draw){
-    console.log(draw);
-  });
-});
+lottoNlcb.getDraw(range).then(console.log, console.error);
 ```
-#### `.getDrawNumber(number, drawNumberCallback)`
-
 Get draw of a given number:
-
-`getDrawNumber`(`number`, `drawNumberCallback`) calls `drawNumberCallback`
-with the draw whose number is equal to `number`.
-
-`drawNumberRangeCallback` is called with an error object, which
-is null if no error occured, and a draw with the specified number. 
 
 The following prints the first lottoplus draw ever.
 ```js
 #! /usr/bin/env node
-var argentDrivers = require('argent-drivers');
-var lottoplusDrivers = argentDrivers.lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
 
-nlcbLottoplusDriver.getDrawNumber(1, function(error, draw){
-  if(error){
-    console.log(error);
-    return;
-  }
-  console.log(draw);
-});
+lottoNlcb.getDraw(1).then(console.log, console.error);
 ```
-#### `.getDrawNumberRange(range, drawNumberRangeCallback)`
-
 Get draws in given number-range:
-
-`getDrawNumberRange`(`range`, `drawNumberRangeCallback`) calls 
-`drawNumberRangeCallback` with the draws whose numbers are 
-within the range specified by `range`. The draws passed on to 
-`drawNumberRangeCallback` shall have numbers greater than or equal to
-the start boundary of the range, and less than the end
-boundary of the range. i.e. all numbers in \[`start`, `end`).
-
-`range` is an object with number properties `start` and `end`.
-`start` represents the start boundary of the number range and 
-`end` represents the end boundary of the number range.
-
-`drawNumberRangeCallback` is called with an error object, which
-is null if no error occured, and an array containing the 
-draws with numbers in range that could have been retrieved.
 
 The following prints draws with numbers from 1 to 10 inclusive.
 ```js
 #! /usr/bin/env node
-var lottoplusDrivers = require('argent-drivers').lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
+var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
 
 var range = {
   start: 1, 
   end: 11 
 };
 
-nlcbLottoplusDriver.getDrawNumberRange(range, function(error, draws){
-  if(error){
-    console.log(error);
-    return;
-  }
-  draws.forEach(function(draw){
-    console.log(draw);
-  });
-});
+lottoNlcb.getDraw(range).then(console.log, console.error);
 ```
 #### `.lottoplus.mongo`
 Stores and retrieves draws from a mongo database.
 
 Get a driver:
+Change configuration to reflect local settings.
 ```js
-//Change these to reflect your mongo setup
-var dbOptions = {
-  'address': 'localhost:27017/lottoplus?auto_reconnect',
-  'username': null,
-  'password': null
-};
-var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver(dbOptions);
+var lottoMongo = require('argent-drivers').lottoplus.mongo;
 ```
 ####Methods of the driver
+The getDraw method of the mongo driver is identical to the nlcb driver. See above for
+details.
+#### `.getDraw(drawProperty)`
 
-#### `.getDrawDate(aMoment, drawDateCallback)`
-
-Get draw of a given date:
-
-`getDrawDate`(`aMoment`, `drawDateCallback`) calls `drawDateCallback`
-with the draw whose date is equal to the one specified by `aMoment`.
-
-`aMoment` is an instance of Moment---see [.moment](#moment).
-
-`drawDateRangeCallback` is called with an error object, which
-is null if no error occured, and a draw with the specified date. 
-
-The following prints the draw for 1 December, 2012.
-```js
-#! /usr/bin/env node
-var argentDrivers = require('argent-drivers');
-var lottoplusDrivers = argentDrivers.lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
-var moment = argentDrivers.moment;
-
-var date = moment('2012 12 1', 'YYYY MM DD'),
-nlcbLottoplusDriver.getDrawDate(date, function(error, draw){
-  if(error){
-    console.log(error);
-    //close database c'est tres important
-    nlcbLottoplusDriver.close(function(){});
-    return;
-  }
-  //close database c'est tres important
-  nlcbLottoplusDriver.close(function(){});
-  console.log(draw);
-});
-```
-
-#### `.getDrawDateRange(range, drawDateRangeCallback)`
-
-Get draws in given date-range:
-
-`getDrawDateRange`(`range`, `drawDateRangeCallback`) calls 
-`drawDateRangeCallback` with the draws whose dates are 
-within the range specified by `range`. The draws passed on to 
-`drawDateRangeCallback` shall have dates greater than or equal to
-the start boundary of the range, and less than the end
-boundary of the range. i.e. all dates in \[`start`, `end`).
-
-`range` is an object with properties `start` and `end`.
-Each of these is an instance of Moment---see [.moment](#moment).
-The `start` Moment represents the start boundary of the date range and
-the `end` Moment represents the end boundary of the date range.
-
-`drawDateRangeCallback` is called with an error object, which
-is null if no error occured, and an array containing the 
-draws with dates in range that could have been retrieved.
-
-The following prints all draws in December 2012.
-```js
-#! /usr/bin/env node
-var argentDrivers = require('argent-drivers');
-var lottoplusDrivers = argentDrivers.lottoplus;
-var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver();
-var moment = argentDrivers.moment;
-
-var range = {
-  start: moment('2012 12 1', 'YYYY MM DD'),
-  end: moment('2013 1 1', 'YYYY MM DD')
-};
-
-mongoLottoplusDriver.getDrawDateRange(range, function(error, draws){
-  if(error){
-    console.log(error);
-    //close database c'est tres important
-    mongoLottoplusDriver.close(function(){});
-    return;
-  }
-  draws.forEach(function(draw){
-    console.log(draw);
-  });
-  //close database c'est tres important
-  mongoLottoplusDriver.close(function(){});
-});
-```
-#### `.getDrawNumber(number, drawNumberCallback)`
-
-Get draw of a given number:
-
-`getDrawNumber`(`number`, `drawNumberCallback`) calls `drawNumberCallback`
-with the draw whose number is equal to `number`.
-
-`drawNumberRangeCallback` is called with an error object, which
-is null if no error occured, and a draw with the specified number. 
-
-The following prints the first lottoplus draw ever.
-```js
-#! /usr/bin/env node
-var argentDrivers = require('argent-drivers');
-var lottoplusDrivers = argentDrivers.lottoplus;
-var nlcbLottoplusDriver = lottoplusDrivers.nlcb.createDriver();
-
-nlcbLottoplusDriver.getDrawNumber(1, function(error, draw){
-  if(error){
-    console.log(error);
-    //close database c'est tres important
-    mongoLottoplusDriver.close(function(){});
-    return;
-  }
-  //close database c'est tres important
-  mongoLottoplusDriver.close(function(){});
-  console.log(draw);
-});
-```
-#### `.getDrawNumberRange(range, drawNumberRangeCallback)`
-
-Get draws in given number-range:
-
-`getDrawNumberRange`(`range`, `drawNumberRangeCallback`) calls 
-`drawNumberRangeCallback` with the draws whose numbers are 
-within the range specified by `range`. The draws passed on to 
-`drawNumberRangeCallback` shall have numbers greater than or equal to
-the start boundary of the range, and less than the end
-boundary of the range. i.e. all numbers in \[`start`, `end`).
-
-`range` is an object with number properties `start` and `end`.
-`start` represents the start boundary of the number range and 
-`end` represents the end boundary of the number range.
-
-`drawNumberRangeCallback` is called with an error object, which
-is null if no error occured, and an array containing the 
-draws with numbers in range that could have been retrieved.
-
-The following prints draws with numbers from 1 to 10 inclusive.
-```js
-#! /usr/bin/env node
-var lottoplusDrivers = require('argent-drivers').lottoplus;
-var mongoLottoplusDriver = lottoplusDrivers.mongo.createDriver();
-
-var range = {
-  start: 1, 
-  end: 11 
-};
-
-mongoLottoplusDriver.getDrawNumberRange(range, function(error, draws){
-  if(error){
-    console.log(error);
-    //close database c'est tres important
-    return;
-  }
-  draws.forEach(function(draw){
-    console.log(draw);
-  });
-  //close database c'est tres important
-  mongoLottoplusDriver.close(function(){});
-});
-```
-#### `.storeDraws(draws, storeDrawsCallback)`
+#### `.saveDraw(draws)`
 
 Store the draws in the lottoplus mongo database.
-
-`storeDraws`(`draws`, `storeDrawsCallback`) calls `storeDrawsCallback` with
-no arguments after storing `draws` in the `draws` collection of the database.
-
-`draws` is an array of objects representing the draws.
-
-#### `.close(closeCallback)`
-
-close database connection and call `closeCallback` with no arguments
-
-## .moment
-
-The moment factories are located in `require('argent-drivers').moment`
-
-See [moment.js docs] (http://momentjs.com/docs/) for information on how
-to construct and use moment objects.
 
 ## .errors
 
