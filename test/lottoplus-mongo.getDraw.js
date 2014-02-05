@@ -165,7 +165,7 @@ describe('mongoLottoplusDriver', function() {
 });
 
 describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(datAsArray)', function() {
+  describe('#getDraw(dateAsArray)', function() {
     it('should accept ranges with array representation of a date', function(done) {
       mongoLottoplusDriver.getDraw(arrayDateStart)
       .then(function(draws) {
@@ -179,11 +179,16 @@ describe('mongoLottoplusDriver', function() {
 describe('mongoLottoplusDriver', function() {
   describe('#saveDraw(draw)', function() {
     it('should save single draw correctly', function(done) {
-      var draw = {number: 1309};
+      var draw = {number: -1310};
       mongoLottoplusDriver.saveDraw(draw)
       .then(function(draws) {
         draws.should.eql([draw]);
+        mongoLottoplusDriver.removeDraw(draw).done();
         done(); 
+      },
+      function (error) {
+        error.should.not.be.ok();
+        done();
       }).done();
     });
   });
@@ -192,14 +197,28 @@ describe('mongoLottoplusDriver', function() {
 describe('mongoLottoplusDriver', function() {
   describe('#saveDraw(draws)', function() {
     it('should save arrays of draws correctly', function(done) {
-      var draws = [{number: 1309}, {number: 1310}];
+      var doc1 = {number: -1309};
+      var doc2 = {number: -1310};
+      var draws = [doc1, doc2];
       mongoLottoplusDriver.saveDraw(draws)
       .then(function(savedDraws) {
         savedDraws.should.eql(draws);
-        done(); 
+        mongoLottoplusDriver.removeDraw({number: {$lt: 0}})
+          .then(function (n) {
+            console.log('deleted ' + n + ' docs');
+            n.should.eql(2);
+            done(); 
+          },
+          function (error) {
+            console.log('error removing docs');
+            SHOULD.not.exist(error);
+            done(); 
+          }).done();
+      },
+      function (error) {
+        SHOULD.not.exist(error);
+        done();
       }).done();
     });
   });
 });
-
-
