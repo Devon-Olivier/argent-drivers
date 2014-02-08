@@ -19,10 +19,7 @@ var expectedDraws = [{
   date: new Date(stringDateStart),
   numbersPlayed: [20, 26, 28, 32, 34, 8],
   jackpot: 4987528.04,
-  numberOfWinners: 0},
-  null,
-  null,
-  null, {
+  numberOfWinners: 0}, {
   number: 1191,
   date: MOMENT(new Date(stringDateEnd)).subtract(1, 'day').toDate(),
   numbersPlayed: [7, 15, 16, 24, 32, 5],
@@ -121,7 +118,7 @@ describe('nlcbLottoplusDriver', function() {
     it('should accept ranges with string start and end', function(done) {
       nlcbLottoplusDriver.getDraw({start:stringNumberStart, end:stringNumberEnd})
       .then(function(draws) {
-        draws.should.eql([expectedDraws[0], expectedDraws[4]]);
+        draws.should.eql(expectedDraws);
         done(); 
       }).done();
     });
@@ -133,7 +130,7 @@ describe('nlcbLottoplusDriver', function() {
     it('should accept ranges with number start and string end', function(done) {
       nlcbLottoplusDriver.getDraw({start:numberStart, end:stringNumberEnd})
       .then(function(draws) {
-        draws.should.eql([expectedDraws[0], expectedDraws[4]]);
+        draws.should.eql(expectedDraws);
         done(); 
       }).done();
     });
@@ -145,7 +142,7 @@ describe('nlcbLottoplusDriver', function() {
     it('should accept ranges with number start and end', function(done) {
       nlcbLottoplusDriver.getDraw({start:numberStart, end:numberEnd})
       .then(function(draws) {
-        draws.should.eql([expectedDraws[0], expectedDraws[4]]);
+        draws.should.eql(expectedDraws);
         done(); 
       }).done();
     });
@@ -157,7 +154,7 @@ describe('nlcbLottoplusDriver', function() {
     it('should accept ranges with string start and Date end', function(done) {
       nlcbLottoplusDriver.getDraw({start:stringNumberStart, end:numberEnd})
       .then(function(draws) {
-        draws.should.eql([expectedDraws[0], expectedDraws[4]]);
+        draws.should.eql(expectedDraws);
         done(); 
       }).done();
     });
