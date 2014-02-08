@@ -109,7 +109,7 @@ var getDraw = function (property) {
       MONGOCONF.uri,
       {w:1})
     .then(function (db) {
-      var doQuery = function (queryFunc, collection, queryObject) {
+      var doQuery = function doQuery (queryFunc, collection, queryObject) {
         return queryFunc(collection, queryObject)
           .then(function (draws) {
             db.close();
@@ -149,6 +149,7 @@ var getDraw = function (property) {
             return doQuery(_getDrawArray, collection, queryObject);
           }
 
+          db.close();
           throw new TypeError('Argument invalid');
         });
     });
