@@ -305,7 +305,12 @@ var getDraw = function getDraw(property) {
   if (IS.numberRange(property)) {
     var numberPromises = DUTILS.rangeArray(+property.start, +property.end - 1)
       .map(_getNumber);
-    return Q.all(numberPromises);
+    return Q.all(numberPromises)
+      .then(function(draws) {
+        return draws.filter(function (draw) {
+          return draw !== null;
+        });
+      });
   }
   //It is important to ensure that we don't have
   //numeric values or ranges before we consider dates
@@ -321,7 +326,12 @@ var getDraw = function getDraw(property) {
     for (var m=iter.next(); iter.hasNext(); m=iter.next()) {
       datePromises.push(_getDate(m));
     }
-    return Q.all(datePromises);
+    return Q.all(datePromises)
+      .then(function (draws) {
+        return draws.filter(function (draw) {
+          return draw !== null;
+        });
+      });
   }
 
   return Q.fcall(function () {
