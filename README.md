@@ -9,7 +9,7 @@ Drivers to lottoplus database stores.
 ###Install argent-drivers
   `argent-drivers` is in the npm repository. To install
   
-  `npm install argent-drivers`
+  `$ npm install argent-drivers`
   
   This is the recommended way to install `argent-drivers`.
 
@@ -17,7 +17,7 @@ Drivers to lottoplus database stores.
 
   `git clone https://github.com/Devon-Olivier/argent-drivers.git` to get `argent-drivers`
 
-  `npm install` in the root of the repository installs the node modules 
+  `$ npm install` in the root of the repository installs the node modules 
   dependencies.
 
 ###Usage
