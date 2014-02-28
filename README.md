@@ -26,12 +26,9 @@ The lottoplus drivers
 ```js
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 ```
-We are expecting to have others such as playwhe and cashpot.
 
 #### `.lottoplus.nlcb`
 Scrapes nlcb.co.tt for lottoplus draws.
-
-####Methods of the scraper
 
 #### `.getDraw(drawProperty)`
 
@@ -110,15 +107,13 @@ lottoNlcb.getDraw(range).then(console.log, console.error);
 #### `.lottoplus.mongo`
 Stores and retrieves draws from a mongo database.
 
-Get a driver:
-Change configuration to reflect local settings.
 ```js
 var lottoMongo = require('argent-drivers').lottoplus.mongo;
 ```
-####Methods of the driver
+#### `.getDraw(drawProperty)`
+
 The getDraw method of the mongo driver is identical to the nlcb driver. See above for
 details.
-#### `.getDraw(drawProperty)`
 
 #### `.saveDraw(draws)`
 
@@ -127,4 +122,4 @@ Store the draws in the lottoplus mongo database.
 ## .errors
 
 The errors passed to callbacks shall be of one of these found in
-`require('argent-drivers').errors`.
+`require('argent-drivers').errors` or one of the native Error objects.
