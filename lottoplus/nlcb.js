@@ -8,8 +8,6 @@
  ***********************************************************/
 'use strict';
 
-var JQUERYPATH = '../lib/jquery.js';
-
 //native node modules
 var HTTP = require('http');
 var QUERYSTRING = require('querystring');
@@ -27,6 +25,7 @@ var NLCBCONF = require('../config/nlcb-conf.json');
 //local libs
 var DUTILS = require('../lib/utils.js');
 var IS = require('../lib/is.js');
+var JQUERYPATH = '../lib/jquery.js';
 
 /********************************Parser*************************************/
 /** 
@@ -242,7 +241,7 @@ var _requestParseHtml = function _requestParseHtml(options, errorDetails) {
  **/
 var _getNumber = function _getNumber(number) {
   var options = Object.create(NLCBCONF);
-  options.path = '/search/lottoplus/FindDraw.php';
+  options.path = options.getDrawPath;
   options.queryString = QUERYSTRING.stringify({drawno: number});
   return _requestParseHtml(options, 'query made for draw number ' + number);
 };
@@ -255,7 +254,7 @@ var _getNumber = function _getNumber(number) {
  **/
 var _getDate = function _getDate(moment) {
   var options = Object.create(NLCBCONF);
-  options.path = '/search/lottoplus/cashQuery.php';
+  options.path = options.getDatePath;
   var queryObject = {
     day: moment.format("DD"),
     month: moment.format("MMM"),
