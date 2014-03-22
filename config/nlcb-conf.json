@@ -7,5 +7,6 @@
     "Connection": "keep-alive"
   },
   "getDrawPath": "/search/lottoplus/FindDraw.php",
-  "getDatePath": "/search/lottoplus/cashQuery.php"
+  "getDatePath": "/search/lottoplus/cashQuery.php",
+  "getNewJackpotPath": "/home/main.php"
 } 

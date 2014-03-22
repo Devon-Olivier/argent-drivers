@@ -27,7 +27,7 @@ var DUTILS = require('../lib/utils.js');
 var IS = require('../lib/is.js');
 var JQUERYPATH = '../lib/jquery.js';
 
-/********************************Parser*************************************/
+/********************************Draw Parser*************************************/
 /** 
  * a Draw is an Object with the following properties
  * number: the draw number
@@ -179,7 +179,7 @@ var _parseDrawHtml = function _parseDrawHtml(html) {
 
   return deferred.promise;
 };
-/********************************End Parser*********************************/
+/********************************End Draw Parser*********************************/
 
 /**
  * _requestHtml: options -> promise
@@ -213,7 +213,7 @@ var _requestHtml = function _requestHtml(options) {
 };
 
 /**
- *_requestParseHtml: Object, string -> promise
+ *_requestParseDrawHtml: Object, string -> promise
  * Consume an object with properties coresponding to query parameters and a 
  * string and produce promise for a Draw represented by the html returned.
  * If an error occurs set the 'details' property of the error object to the 
@@ -224,7 +224,7 @@ var _requestHtml = function _requestHtml(options) {
  * @errorDetails a string to assign to the 'details' property of the error object
  * in case of error.
  **/
-var _requestParseHtml = function _requestParseHtml(options, errorDetails) {
+var _requestParseDrawHtml = function _requestParseDrawHtml(options, errorDetails) {
   return _requestHtml(options)
     .then(_parseDrawHtml)
     .then(null, function (error) {
@@ -243,7 +243,7 @@ var _getNumber = function _getNumber(number) {
   var options = Object.create(NLCBCONF);
   options.path = options.getDrawPath;
   options.queryString = QUERYSTRING.stringify({drawno: number});
-  return _requestParseHtml(options, 'query made for draw number ' + number);
+  return _requestParseDrawHtml(options, 'query made for draw number ' + number);
 };
 
 /**
@@ -261,7 +261,7 @@ var _getDate = function _getDate(moment) {
     year: moment.format("YY")
   };
   options.queryString = QUERYSTRING.stringify(queryObject);
-  return _requestParseHtml(options, 'query made for ' + moment.toDate());
+  return _requestParseDrawHtml(options, 'query made for ' + moment.toDate());
 };
 
 /**
@@ -337,7 +337,41 @@ var getDraw = function getDraw(property) {
     throw new TypeError('Argument invalid');
   });
 };
+
+var _getNewJackpot = function getNewJackpot() {
+  var _parseNewJackpotHtml = function _parseNewJackpotHtml(html) {
+    var deferred = Q.defer();
+    JSDOM.env(html, [JQUERYPATH], function (error, window) {
+      if (error) {
+        deferred.reject(error);
+        return;
+      }
+
+      var $ = window.$;
+      var jackpot = $('td.blink').html();
+      jackpot = jackpot.replace(/,\s*/g, '');
+      jackpot = jackpot.match(/\d+(\.\d+)?/);
+      if (!jackpot) {
+        deferred.reject(ERROR.DRAWPARSE('Unexpected draw jackpot format'));
+        return;
+      }
+      jackpot = +jackpot[0];
+      deferred.resolve(jackpot);
+    });
+
+    return deferred.promise;
+  };
+  
+  var options = Object.create(NLCBCONF);
+  options.path = NLCBCONF.getNewJackpotPath;
+  options.method = 'GET';
+  delete options.headers['Content-Type'];
+  return _requestHtml(options).
+    then(_parseNewJackpotHtml);
+};
+
 exports.getDraw = getDraw;
+exports.getNewJackpot = _getNewJackpot;
 exports.MOMENT = MOMENT;
 
 if (process.env.NODE_ENV==='dev') {
