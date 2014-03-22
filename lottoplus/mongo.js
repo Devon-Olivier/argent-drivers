@@ -199,7 +199,56 @@ var removeDraw = function removeDraw (queryObject) {
       return deferred.promise;
     });
 }; 
+
+var saveNewJackpot = function saveNewJackpot (jackpot) {
+  return Q.ninvoke(
+      MONGODB.MongoClient,
+      'connect',
+      MONGOCONF.uri,
+      {w:1})
+  .then(function (db) {
+    var deferred = Q.defer();
+    db.collection('stats').update({about: 'jackpot'},
+      {$set:{new: jackpot}},
+      {upsert: true},
+      function (error, result) {
+      if (error) {
+        deferred.reject(error);
+      }
+      else {
+        deferred.resolve(result);
+      }
+      db.close();
+    });
+    return deferred.promise;
+  });
+
+};
+
+var getNewJackpot = function getNewJackpot() {
+  return Q.ninvoke(
+      MONGODB.MongoClient,
+      'connect',
+      MONGOCONF.uri,
+      {w:1})
+  .then(function (db) {
+    var deferred = Q.defer();
+    db.collection('stats').findOne({about: 'jackpot'}, function (error, stats) {
+      if (error) {
+        deferred.reject(error);
+      }
+      else {
+        deferred.resolve(stats.new);
+      }
+      db.close();
+    });
+    return deferred.promise;
+  });
+};
+
 exports.getDraw = getDraw;
+exports.saveNewJackpot = saveNewJackpot;
+exports.getNewJackpot = getNewJackpot;
 exports.saveDraw = saveDraw;
 exports.removeDraw = removeDraw;
 exports.MOMENT = MOMENT;
