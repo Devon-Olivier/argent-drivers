@@ -338,7 +338,7 @@ var getDraw = function getDraw(property) {
   });
 };
 
-var _getNewJackpot = function getNewJackpot() {
+var getNewJackpot = function getNewJackpot() {
   var _parseNewJackpotHtml = function _parseNewJackpotHtml(html) {
     var deferred = Q.defer();
     JSDOM.env(html, [JQUERYPATH], function (error, window) {
@@ -371,7 +371,7 @@ var _getNewJackpot = function getNewJackpot() {
 };
 
 exports.getDraw = getDraw;
-exports.getNewJackpot = _getNewJackpot;
+exports.getNewJackpot = getNewJackpot;
 exports.MOMENT = MOMENT;
 
 if (process.env.NODE_ENV==='dev') {
