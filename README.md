@@ -122,9 +122,19 @@ var lottoMongo = require('argent-drivers').lottoplus.mongo;
 The getDraw method of the mongo driver is identical to the nlcb driver. See above for
 details.
 
+#### `.getNewJackpot()`
+
+Same as nlcb nlcb driver. See above.
+
+#### `.saveNewJackpot(jackpot)`
+
+saveNewJackopt: number -> promise (for unspecified value)
+
+Update mongo with new jackpot
+
 #### `.saveDraw(draws)`
 
-Store the draws in the lottoplus mongo database.
+Store draws in the lottoplus mongo database.
 
 ## .errors
 
