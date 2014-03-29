@@ -2,11 +2,11 @@
 
 Drivers to lottoplus database stores.
 
-###Install dependencies
+##Install dependencies
 
-###depends on [node.js](http://nodejs.org)
+depends on [node.js](http://nodejs.org)
 
-###Install argent-drivers
+##Install argent-drivers
   `argent-drivers` is in the npm repository. To install
   
   `$ npm install argent-drivers`
@@ -20,14 +20,14 @@ Drivers to lottoplus database stores.
   `$ npm install` in the root of the repository installs the node modules 
   dependencies.
 
-###Usage
+##Usage
 
 The lottoplus drivers
 ```js
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 ```
 
-#### `.lottoplus.nlcb`
+### `.lottoplus.nlcb`
 Scrapes nlcb.co.tt for lottoplus draws.
 
 #### `.getDraw(drawProperty)`
@@ -104,7 +104,14 @@ var range = {
 
 lottoNlcb.getDraw(range).then(console.log, console.error);
 ```
-#### `.lottoplus.mongo`
+#### `.getNewJackpot()`
+
+getNewJackpot: -> promise for a number
+
+Return a promise for the latest jackpot from nlcb.co.tt
+
+
+### `.lottoplus.mongo`
 Stores and retrieves draws from a mongo database.
 
 ```js
