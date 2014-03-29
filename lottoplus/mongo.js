@@ -209,17 +209,17 @@ var saveNewJackpot = function saveNewJackpot (jackpot) {
   .then(function (db) {
     var deferred = Q.defer();
     db.collection('stats').update({about: 'jackpot'},
-      {$set:{new: jackpot}},
+      {$set:{newJackpot: jackpot}},
       {upsert: true},
       function (error, result) {
-      if (error) {
-        deferred.reject(error);
-      }
-      else {
-        deferred.resolve(result);
-      }
-      db.close();
-    });
+        if (error) {
+          deferred.reject(error);
+        }
+        else {
+          deferred.resolve(result);
+        }
+        db.close();
+      });
     return deferred.promise;
   });
 
@@ -240,7 +240,7 @@ var getNewJackpot = function getNewJackpot() {
       else {
         deferred.resolve(stats.new);
       }
-      db.close();
+    db.close();
     });
     return deferred.promise;
   });
