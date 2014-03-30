@@ -238,7 +238,7 @@ var getNewJackpot = function getNewJackpot() {
         deferred.reject(error);
       }
       else {
-        deferred.resolve(stats.new);
+        deferred.resolve(stats.newJackpot);
       }
     db.close();
     });
