@@ -205,7 +205,6 @@ describe('mongoLottoplusDriver', function() {
         savedDraws.should.eql(draws);
         mongoLottoplusDriver.removeDraw({number: {$lt: 0}})
           .then(function (n) {
-            console.log('deleted ' + n + ' docs');
             n.should.eql(2);
             done(); 
           },
