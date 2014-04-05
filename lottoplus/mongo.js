@@ -238,7 +238,12 @@ var getNewJackpot = function getNewJackpot() {
         deferred.reject(error);
       }
       else {
-        deferred.resolve(stats.newJackpot);
+        if (stats) {
+          deferred.resolve(stats.newJackpot);
+        }
+        else {
+          deferred.resolve(null);
+        }
       }
     db.close();
     });
