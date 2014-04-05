@@ -105,11 +105,9 @@ var range = {
 lottoNlcb.getDraw(range).then(console.log, console.error);
 ```
 #### `.getNewJackpot()`
-
 getNewJackpot: -> promise for a number
 
 Return a promise for the latest jackpot from nlcb.co.tt
-
 
 ### `.lottoplus.mongo`
 Stores and retrieves draws from a mongo database.
@@ -123,14 +121,15 @@ The getDraw method of the mongo driver is identical to the nlcb driver. See abov
 details.
 
 #### `.getNewJackpot()`
+getNewJackpot: -> promise for a number
 
-Same as nlcb nlcb driver. See above.
+Return a promise for the latest jackpot from nlcb.co.tt. The promised number may
+the value null if the database does not have a jackpot stored.
 
 #### `.saveNewJackpot(jackpot)`
-
 saveNewJackopt: number -> promise (for unspecified value)
 
-Update mongo with new jackpot
+Update mongo with new jackpot from nlcb.co.tt.
 
 #### `.saveDraw(draws)`
 
