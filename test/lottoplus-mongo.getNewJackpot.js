@@ -6,7 +6,7 @@ describe('lottoplus-mongo', function(){
     it('save correctly', function(done){
       mongoLottoplusDriver.getNewJackpot()
         .then(function(jackpot){
-          console.log(jackpot);
+          SHOULD.exist(jackpot);
           done();
         }, function (error) {
           throw error;
@@ -14,6 +14,4 @@ describe('lottoplus-mongo', function(){
     });
   });
 });
-
-
 
