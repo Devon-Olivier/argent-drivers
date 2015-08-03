@@ -1,3 +1,6 @@
+'use strict';
+
+const ERROR = require('./error-names.js');
 /** 
  * a Draw is an Object with the following properties
  * drawNumber: the draw number
@@ -24,7 +27,7 @@
  *  };
  **/
 var parse = function parse(html) {
-  var drawh2Regexp = /<h2.*?Draw.*?h2>/;
+  var drawh2Regexp = /<h2.*?Draw.*?Winners.*?\d+/;
   var drawNumberRegexp = /Draw\s*#.*?(\d+)/;
   var drawDateRegexp = /Date.*(\d{2}\-\w{3}\-\d{2})/;
   var numbersDrawnRegexp = /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/;
@@ -35,7 +38,9 @@ var parse = function parse(html) {
 
   var h2match = html.match(drawh2Regexp);
   if(h2match === null){
-    throw new Error('Found no draw in any h2 tag of html: \n', html);
+    const error = new Error('Found no draw in any h2 tag of html: \n', html);
+    error.name = ERROR.NODRAW;
+    throw error;
   }
 
   var h2 = h2match[0];
