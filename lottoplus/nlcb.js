@@ -16,10 +16,11 @@ const URL = require('url');
 //external node modules
 const MOMENT = require('moment');
 require('twix');
+const LODASH = require('lodash');
 
 //native argent modules
 const TYPE = require('./type.js');
-const ERROR = require('../lib/errors.js');
+const ERRORNAMES = require('./error-names.js');
 const NLCBCONF = require('../config/nlcb-conf.json');
 const PARSE = require ('./parser.js').parse;
 
@@ -93,6 +94,28 @@ var installNlcbGet = function installNlcbGet(table) {
   };
   store(table, 'number', getNumber);
 
+  /**
+   * getNumberRange: Number-range bePersistent -> promise
+   * Consumes an Object with properties 'start' and 'end', that are
+   * Number, return a promise for an array of Draws whose date property 
+   * is in the range [start, end).
+   **/
+  var getNumberRange = function getNumberRange (numberRange) {
+    const rangeArray = LODASH.range(numberRange.start, numberRange.end);
+    const promiseArray = rangeArray.map(
+        function(number) {
+          return getNumber(number).catch(function (error) {
+            //if there is no draw reported just put null for that
+            //draw instead of letting all of them fail
+            if(error.name === ERRORNAMES.NODRAW) {
+              return null;
+            }
+            throw error;
+          });}
+        );
+    return Promise.all(promiseArray);
+  };
+  store(table, 'number-range', getNumberRange);
 
   /**
    * getDate: Date -> promise
@@ -124,31 +147,51 @@ var installNlcbGet = function installNlcbGet(table) {
   //       nlcb.co.tt has broken query for dates and is
   //       also very slow in http response.
   //       Check for example, getDraw(new Date("2015 1 1")
-  ///**
-  // * getDateRange: Date-range -> promise
-  // * Consumes an Object with properties 'start' and 'end', that are
-  // * Dates, return a promise for an array of Draws whose date property 
-  // * is in the range [start, end).
-  // **/
-  ////helper for getDateRange
-  //var mapIterator = function mapIterator (f, iterator) {
-  //  var array = [];
-  //  while(iterator.hasNext()) {
-  //    array.push(f(iterator.next()));
-  //  }
-  //  return array;
-  //};
-  //var getDateRange = function getDateRange (dateRange) {
-  //  var startMoment = MOMENT(dateRange.start);
-  //  var twixDateRange = startMoment.twix(dateRange.end);
-  //  var twixDateRangeIterator = twixDateRange.iterate('days');
-  //  var datePromises = mapIterator(function(moment) {
-  //    return getDate(moment.toDate());
-  //  }, twixDateRangeIterator);
+  /**
+   * getDateRange: Date-range -> promise
+   * Consumes an Object with properties 'start' and 'end', that are
+   * Dates, return a promise for an array of Draws whose date property 
+   * is in the range [start, end).
+   **/
+  //helper for getDateRange. twix doesn't seem to return a standard
+  //javascript iterator.
+  var mapIterator = function mapIterator (f, iterator) {
+    const array = [];
+    while(iterator.hasNext()) {
+      array.push(f(iterator.next()));
+    }
+    return array;
+  };
+  var getDateRange = function getDateRange (dateRange) {
+    const startMoment = MOMENT(dateRange.start);
+    const endMoment = MOMENT(dateRange.end);
+    endMoment.subtract(1, 'days');
+    const twixDateRange = startMoment.twix(endMoment);
+    const twixDateRangeIterator = twixDateRange.iterate('days');
+    const dateArray = mapIterator(function(moment) {
+      return moment.toDate();
+    }, twixDateRangeIterator);
 
-  //  return Promise.all(datePromises);
-  //};
-  //store(table, 'date-range', getDateRange);
+    const promiseArray = dateArray.map(
+        function(date) {
+          return getDate(date)
+            .catch(function (error) {
+              //if there is no draw reported just put null for that
+              //draw instead of letting all of them fail
+              if(error.name === ERRORNAMES.NODRAW) {
+                return null;
+              }
+              throw error;
+            });
+        });
+    return Promise.all(promiseArray)
+      .then(function(draws){
+        return draws.filter(function(draw){
+          return draw !== null;
+        });
+      });
+  };
+  store(table, 'date-range', getDateRange);
 };
 const getTable = makeTable(); 
 installNlcbGet(getTable);
@@ -158,6 +201,7 @@ installNlcbGet(getTable);
  * DrawProperty is any one of the following types:
  *  number
  *  Date
+ *  RangeObject: {start: <Date>, end: <Date>} or {start: <number>, end: <number>}
  *
  * getDraw: DrawProperty -> promise
  * Consume a DrawProperty of a set of draws return a promise for those draws
@@ -165,6 +209,8 @@ installNlcbGet(getTable);
  *
  * If the DrawProperty is a number return a promise for the draw with that number
  * If the DrawProperty is a Date, return a promise for the draw on that date.
+ * If the DrawProperty is a RangeObject then return a promise for an array of
+ * draws in [RangeObject.start, RangeObject.end);
  **/
 var getDraw = function getDraw(property) {
   //idea taken from GENERIC OPERATOR discussions in SICP
