@@ -23,6 +23,20 @@ const TYPE = require('./type.js');
 const ERRORNAMES = require('./error-names.js');
 const NLCBCONF = require('../config/nlcb-conf.json');
 const PARSE = require ('./parser.js').parse;
+const STORE = require('./table.js').store;
+const RETRIEVE = require('./table.js').retrieve;
+const MAKETABLE = require('./table.js').makeTable;
+/** 
+ * a Draw is an Object with the following properties
+ * drawNumber:  the draw number
+ * drawDate: Date object representing the date for this draw
+ * numbersDrawn: an array of numbers played for this draw such
+ *                that numbersDrawn[5] is the powerball of the
+ *                draw
+ * drawjackpot: number representing the jackpot for this draw
+ * numberOfWinners: a number representing the number of 
+ *                  winners for the draw
+ **/
 
 /**
  * requestHtml: options -> promise
@@ -57,21 +71,6 @@ var requestHtml = function requestHtml(options) {
 
 };
 
-
-
-var makeTable = function makeTable() {
-  return {};
-};
-
-var retrieve = function retrieve(table, type) {
-  return table[type];
-};
-
-var store = function store(table, type, f) {
-  table[type] = f;
-};
-
-
 var installNlcbGet = function installNlcbGet(table) {
 
   /**
@@ -92,7 +91,7 @@ var installNlcbGet = function installNlcbGet(table) {
 
     return requestHtml(options).then(PARSE);
   };
-  store(table, 'number', getNumber);
+  STORE(table, 'number', getNumber);
 
   /**
    * getNumberRange: Number-range bePersistent -> promise
@@ -115,7 +114,7 @@ var installNlcbGet = function installNlcbGet(table) {
         );
     return Promise.all(promiseArray);
   };
-  store(table, 'number-range', getNumberRange);
+  STORE(table, 'number-range', getNumberRange);
 
   /**
    * getDate: Date -> promise
@@ -141,7 +140,7 @@ var installNlcbGet = function installNlcbGet(table) {
 
     return requestHtml(options).then(PARSE);
   };
-  store(table, 'date', getDate);
+  STORE(table, 'date', getDate);
 
   // TODO: try do implement this. As of 1st August 2015
   //       nlcb.co.tt has broken query for dates and is
@@ -191,9 +190,9 @@ var installNlcbGet = function installNlcbGet(table) {
         });
       });
   };
-  store(table, 'date-range', getDateRange);
+  STORE(table, 'date-range', getDateRange);
 };
-const getTable = makeTable(); 
+const getTable = MAKETABLE(); 
 installNlcbGet(getTable);
 
 
@@ -214,7 +213,7 @@ installNlcbGet(getTable);
  **/
 var getDraw = function getDraw(property) {
   //idea taken from GENERIC OPERATOR discussions in SICP
-  var getter = retrieve(getTable, TYPE(property));
+  var getter = RETRIEVE(getTable, TYPE(property));
   if(getter === undefined) {
     return Promise.reject(new Error("cannot get draw for this type of" +
           " draw property: " + property));
