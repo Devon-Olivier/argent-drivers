@@ -99,7 +99,7 @@ var installNlcbGet = function installNlcbGet(table) {
    * Number, return a promise for an array of Draws whose date property 
    * is in the range [start, end).
    **/
-  var getNumberRange = function getNumberRange (numberRange) {
+  var getNumberList = function getNumberList(numberRange) {
     const rangeArray = LODASH.range(numberRange.start, numberRange.end);
     const promiseArray = rangeArray.map(
         function(number) {
@@ -114,7 +114,7 @@ var installNlcbGet = function installNlcbGet(table) {
         );
     return Promise.all(promiseArray);
   };
-  STORE(table, 'number-range', getNumberRange);
+  STORE(table, 'number-range', getNumberList);
 
   /**
    * getDate: Date -> promise
@@ -161,7 +161,7 @@ var installNlcbGet = function installNlcbGet(table) {
     }
     return array;
   };
-  var getDateRange = function getDateRange (dateRange) {
+  var getDateList = function getDateList (dateRange) {
     const startMoment = MOMENT(dateRange.start);
     const endMoment = MOMENT(dateRange.end);
     endMoment.subtract(1, 'days');
@@ -190,7 +190,7 @@ var installNlcbGet = function installNlcbGet(table) {
         });
       });
   };
-  STORE(table, 'date-range', getDateRange);
+  STORE(table, 'date-range', getDateList);
 };
 const getTable = MAKETABLE(); 
 installNlcbGet(getTable);
