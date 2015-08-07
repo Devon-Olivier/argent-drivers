@@ -7,6 +7,14 @@
  * Platform: iojs
  ***********************************************************/
 'use strict';
+var consoleLog = function () {};
+var consoleError = function () {};
+module.exports = function(debug) {
+  if(debug) {
+    consoleLog = console.log;
+    consoleError = console.error;
+  }
+};
 
 //native node modules
 const HTTP = require('http');
@@ -251,5 +259,15 @@ var getNewJackpot = function getNewJackpot() {
   return requestHtml(options).then(parse);
 };
 
-exports.getDraw = getDraw;
-exports.getNewJackpot = getNewJackpot;
+var consoleLog = function () {};
+var consoleError = function () {};
+module.exports = function(debug) {
+  if(debug) {
+    consoleLog = console.log.bind(console);
+    consoleError = console.error.bind(console);
+  }
+  return module.exports;
+};
+
+module.exports.getDraw = getDraw;
+module.exports.getNewJackpot = getNewJackpot;
