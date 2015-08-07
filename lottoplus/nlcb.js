@@ -213,7 +213,12 @@ installNlcbGet(getTable);
  **/
 var getDraw = function getDraw(property) {
   //idea taken from GENERIC OPERATOR discussions in SICP
-  var getter = RETRIEVE(getTable, TYPE(property));
+  var type = TYPE(property);
+  if(!type) {
+    return Promise.reject(new Error('dont understand type of ', property));
+  }
+
+  var getter = RETRIEVE(getTable, type);
   if(getter === undefined) {
     return Promise.reject(new Error("cannot get draw for this type of" +
           " draw property: " + property));
