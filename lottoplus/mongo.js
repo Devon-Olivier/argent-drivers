@@ -14,11 +14,12 @@ const MONGOCLIENT = require('mongodb').MongoClient;
 const MOMENT = require('moment');
 const LODASH = require('lodash');
 
+//argent submodules
 const TYPE = require('./type.js');
 const MONGOCONF = require('../config/mongo-conf.json');
 
 
-//TODO: convert to object oriented module. It is more functional now
+//TODO: convert table.js to object oriented module. It is more functional now
 //but it is jus message passing really isn't it? Look at how it is 
 //used... STORE(<table>, <type>, <function>) ... which should be
 //TABLE.store(<type>, <function>) ent?
@@ -27,7 +28,7 @@ const RETRIEVE = require('./table.js').retrieve;
 const MAKETABLE = require('./table.js').makeTable;
 
 /** 
- * a Draw is an Object with the following properties
+ * A Draw is an Object with the following properties
  * @param {drawNumber}:  the draw number //NOTE: internally we store this is _id
  * @param {drawDate}: Date object representing the date for this draw
  * @param {numbersDrawn}: an array of numbers played for this draw such
@@ -41,25 +42,48 @@ const MAKETABLE = require('./table.js').makeTable;
 
 const installMongoGet = function installMongoGet(table) {
 
+  /**
+   * mongoDrawToNlcbDraw: draw from mongo database -> Draw
+   *
+   * consume a draw from the mongodb store of draws and return a
+   * draw as described above.
+   *
+   * @param {mongoDraw} a draw from a mongodb store of draws
+   * @return {Draw}
+   * @api private
+   **/
   const mongoDrawToNlcbDraw = function mongoDrawToNlcbDraw(mongoDraw) {
     const nlcbDraw = LODASH.omit(mongoDraw, '_id');
     nlcbDraw.drawNumber = mongoDraw._id;
     return nlcbDraw;
   };
 
+  /**
+   * getOne: uri, queryObject -> promise for a Draw
+   *
+   * consume a mongodb uri specifying a database and a mongo query object
+   * and return one draws from the database that satisfies the query object
+   *
+   * @param {uri} the uri specifying the database to use
+   * @param {queryObject} the query object
+   * @return {Promise} a Promise for a Draw 
+   * @api private
+   **/
   const getOne = function getOne(uri, queryObject) {
-    debugLog('connecting to ', uri);
+    debugLog('getOne: connecting to ', uri);
     return MONGOCLIENT.connect(uri)
       .then(function(db) {
+        debugLog('getOne: connected to ', uri);
         return db.collection('draws').findOne(queryObject)
           .then(function(draw) {
+            debugLog('getOne: got a draw: ', draw);
             db.close();
             if(draw === null) {
               return null;
             }
-              
             return mongoDrawToNlcbDraw(draw);
           }, function(error) {
+            debugError('getOne: ERROR: ', error);
             db.close();
             throw error;
           });
@@ -67,18 +91,31 @@ const installMongoGet = function installMongoGet(table) {
   };
 
   /**
-   * getDrawArray: uri MongoQueryObject -> promise for an array of draws
+   * getDrawArray: uri, MongoQueryObject -> promise for an array of Draws
+   *
+   * consume a mongodb uri specifying a database and a mongo query object
+   * and return a Promise for an array of draws from the database that 
+   * satisfies the query object
+   *
+   * @param {uri} the uri specifying the database to use
+   * @param {queryObject} the query object
+   * @return {Promise} a Promise for an array of Draws 
+   * @api private
    **/
   const getArray = function getArray (uri, queryObject) {
+    debugLog('getArray: connecting to ', uri);
     return MONGOCLIENT.connect(uri).then(function(db){
+      debugLog('getArray: connected to ', uri);
       //TODO: streams might be better here instead of toArray
       return db.collection('draws').find(queryObject)
         .toArray()
         .then(function(draws) {
+          debugLog('getArray: got a draws: ', draws);
           db.close();
           return draws.map(mongoDrawToNlcbDraw);
         }, function(error) {
           db.close();
+          debugError('getArray: ERROR: ', error);
           throw error;
         });
     });
@@ -91,11 +128,15 @@ const installMongoGet = function installMongoGet(table) {
    * a number property corresponding to that number from the
    * database specified by uri.
    *
-   * @param {uri} a mongodb uri
-   * @param {number} a draw number
+   * @param {uri} a mongodb uri specifying a database
+   * @param {number} a Draw number
+   * @return {Promise} for a Draw
+   * @api public
    **/
   const getNumber = function getNumber(uri, number) {
+    debugLog('getNumber: asked to get: ', number);
     const queryObject = {_id: number};
+    debugLog('getNumber: calling getOne with: ', queryObject);
     return getOne(uri, queryObject);
   };
   STORE(table, 'number', getNumber);
@@ -104,30 +145,40 @@ const installMongoGet = function installMongoGet(table) {
    * getNumberRange: uri Number-range -> promise
    * 
    * Consumes an Object with properties 'start' and 'end', that are
-   * Number, return a promise for an array of Draws whose date property 
+   * Numbers; return a promise for an array of Draws whose date property 
    * is in the range [start, end).
    *
    * @param {uri} a mongodb uri
    * @param {numberRange} {start: <number>, end: <number>}
+   * @return {Promise} a promies for an array of Draws
+   * @api public
    **/
   const getNumberList = function getNumberList(uri, numberRange) {
+    debugLog('getNumberList: asked to get: ', numberRange);
     const queryObject = {_id: {
         $gte: numberRange.start,
         $lt: numberRange.end
       }};
+    debugLog('getNumberList: calling getArray with ', queryObject);
     return getArray(uri, queryObject);
   };
   STORE(table, 'number-range', getNumberList);
 
   /**
-   * getDate: Date -> promise
+   * getDate: uri, Date -> Promise
    *
-   * Consume a Date and returns a promise for the draw with a that date
+   * Consume a uri specifying a mongodb database and a  Date and returns 
+   * a Promise for the draw with a that date
    *
+   * @param {uri} uri specifying a mongo database
    * @param {date} representing a draw date;
+   * @return {Promise} for a Draw
+   * @api public
    **/
   const getDate = function getDate(uri, date) {
+    debugLog('getDate: asked to get: ', date);
     const queryObject = {drawDate: date};
+    debugLog('getDate: calling getOne with: ', queryObject);
     return getOne(uri, queryObject);
   };
   STORE(table, 'date', getDate);
@@ -141,16 +192,24 @@ const installMongoGet = function installMongoGet(table) {
   //      Notice how similar this is to getNumberList can
   //      we generalize? Should we?
   /**
-   * getDateRange: Date-range -> promise
-   * Consumes an Object with properties 'start' and 'end', that are
-   * Dates, return a promise for an array of Draws whose date property 
-   * is in the range [start, end).
+   * getDateRange: uri, Date-range -> promise
+   *
+   * Consumes an uri specifying a mongodb database and an Object with properties 
+   * 'start' and 'end', that are Dates, return a Promise for an array of Draws 
+   * whose date property is in the range [start, end).
+   *
+   * @param {uri} an uri specifying a mongodb database
+   * @param {dateRange} Object {start: <Date>, end: <Date>}
+   * @return {Promise} for an array of Draws
+   * @api public
    **/
   const getDateList = function getDateList (uri, dateRange) {
+    debugLog('getDateList: asked to get: ', dateRange);
     const queryObject = {drawDate: {
         $gte: dateRange.start,
         $lt: dateRange.end
       }};
+    debugLog('getDateList: calling getArray with ', queryObject);
     return getArray(uri, queryObject);
   };
   STORE(table, 'date-range', getDateList);
@@ -162,7 +221,7 @@ installMongoGet(getTable);
 const getDraw = function getDraw(property) {
   //idea taken from GENERIC OPERATOR discussions in SICP
   const type = TYPE(property);
-  debugLog(property, ' type is ', type);
+  debugLog('getDraw: ', property, ' type is ', type);
   if(!type) {
     return Promise.reject(new Error('dont understand type of ', property));
   }
@@ -175,77 +234,121 @@ const getDraw = function getDraw(property) {
   return getter(MONGOURI, property);
 };
 
+
+/**
+ * nlcbDrawToMongoDraw : Draw -> draw for mongo database
+ *
+ * consume a Draw as described above and return a draw to ge stored in the
+ * mongodb database.
+ *
+ * @param {Draw} a draw from a mongodb store of draws
+ * @return {mongoDraw}
+ * @api private
+ **/
 const nlcbDrawToMongoDraw = function nlcbDrawToMongoDraw(nlcbDraw) {
   const mongoDraw = LODASH.omit(nlcbDraw, 'drawNumber');
   mongoDraw._id = nlcbDraw.drawNumber;
   return mongoDraw;
 };
 
+
+/**
+ * saveOneDraw: uri, Draw -> Promise for a native mongodb driver resultObject
+ *
+ * consume a mongodb uri specifying a database and a Draw; attempt to save the
+ * Draw and return a Promise for a mongodb native drive resultObject 
+ *
+ * @param {uri} the uri specifying the database to use
+ * @param {draw} the draw to save
+ * @return {Promise} a Promise for a resultObject
+ * @api public
+ **/
 const saveOneDraw = function saveOneDraw (uri, draw) {
-  debugLog('inside saveOneDraw');
-  debugLog('got ', draw);
+  debugLog('saveOneDraw: asked to save ', draw);
   const mongoDraw = nlcbDrawToMongoDraw(draw);
-  debugLog('will insert ', mongoDraw);
+  debugLog('saveOneDraw: will insert ', mongoDraw);
+  debugLog('saveOneDraw: connecting to ', uri);
   return MONGOCLIENT.connect(uri)
     .then(function (db) {
-      debugLog('got db');
+      debugLog('saveOneDraw: connected to ', uri);
       const collection =  db.collection('draws');
-        return collection.insertOne(mongoDraw, {w:1})
+      return collection.insertOne(mongoDraw, {w:1})
         .then(function(result) {
-          debugLog('inserted %s', result.insertedCount);
+          debugLog('saveOneDraw: inserted %s Draw', result.insertedCount);
           db.close();
           return result;
         }, function(error){
           db.close();
-          debugLog(error);
+          debugLog('saveOneDraw: ERROR: ', error);
           throw error;
         });
     });
 };
 
+
+/**
+ * saveManyDraws: uri, Draws -> Promise for a native mongodb driver resultObject
+ *
+ * consume a mongodb uri specifying a database and an array of Draws and return a
+ * Promise for a mongodb native drive resultObject 
+ *
+ * @param {uri} the uri specifying the database to use
+ * @param {draws} an array of Draws
+ * @return {Promise} a Promise for a resultObject
+ * @api public
+ **/
 const saveManyDraws = function saveManyDraws (uri, draws) {
-  debugLog('inside saveManyDraws');
-  debugLog('got ', draws);
+  debugLog('saveManyDraws: asked to save ', draws);
   const mongoDraws = draws.map(function (draw) {
     return nlcbDrawToMongoDraw (draw);
   });
-  debugLog('will insert ', mongoDraws);
+  debugLog('saveManyDraws: will insert ', mongoDraws);
+  debugLog('saveManyDraws: connecting to ', uri);
   return MONGOCLIENT.connect(uri)
     .then(function (db) {
-      debugLog('got db');
+      debugLog('saveManyDraws: connected to ', uri);
       const collection =  db.collection('draws');
       return collection.insertMany(mongoDraws, {w:1})
         .then(function(result) {
-          debugLog('inserted %s', result.insertedCount);
+          debugLog('saveManyDraws: inserted %s Draws', result.insertedCount);
           db.close();
           return result;
         }, function(error){
           db.close();
-          debugError(error);
+          debugError('saveManyDraws: ERROR: ', error);
           throw error;
         });
     });
 };
 
 
-//TODO://use generic operators to do the dispatch on type?
+/**
+ * removeOneDraw: uri, Draw -> Promise for a native mongodb driver resultObject
+ *
+ * consume a mongodb uri specifying a database and a Draw and return a
+ * Promise for a mongodb native drive resultObject 
+ *
+ * @param {uri} the uri specifying the database to use
+ * @param {draws} a Draw 
+ * @return {Promise} a Promise for a resultObject
+ * @api public
+ **/
 const removeOneDraw = function removeOneDraw (uri, nlcbDraw) {
-  debugLog('inside removeDraw');
-  debugLog('asked to delete ', nlcbDraw);
+  debugLog('removeOneDraw: asked to delete ', nlcbDraw);
   const mongoDraw = nlcbDrawToMongoDraw(nlcbDraw);
-  debugLog('abount to delete ', mongoDraw);
+  debugLog('removeOneDraw: will delete ', mongoDraw);
+  debugLog('removeOneDraw: connecting to ', uri);
   return MONGOCLIENT.connect(uri)
     .then(function (db) {
-      debugLog('got db');
+      debugLog('removeOneDraw: connected to ', uri);
       const collection = db.collection('draws');
-      debugLog('got draws collection');
       return collection.deleteOne(mongoDraw, {w:1})
         .then(function(result){ 
-          debugLog('deleted %s draw', result.deletedCount);
+          debugLog('removeOneDraw: deleted %s draw', result.deletedCount);
           db.close();
           return result;
         }, function(error) {
-          debugError(error);
+          debugError('removeOneDraw: ERROR: ', error);
           db.close();
           throw error;
         });
@@ -310,7 +413,7 @@ module.exports = function(debug) {
     debugError = console.error.bind(console);
     MONGOURI = MONGOCONF.debugUri;
     debugLog('MONGOCONF is ', MONGOCONF)
-    debugLog('MONGOURI set to ', MONGOURI);
+      debugLog('MONGOURI set to ', MONGOURI);
   }
   return module.exports;
 };
