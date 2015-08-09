@@ -25,13 +25,13 @@
   "license": "BSD",
   "readmeFilename": "README.md",
   "dependencies": {
-    "q": "~0.9.7",
-    "jsdom": "~0.8.10",
-    "mongoskin": "~0.6.1",
-    "moment": "~2.5.0",
-    "twix": "~0.4.0"
+    "lodash": "^3.10.0",
+    "moment": "^2.10.3",
+    "mongodb": "^2.0.39",
+    "twix": "^0.6.4"
   },
   "devDependencies": {
-    "should": "~2.1.1"
+    "should": "^7.0.2",
+    "should-promised": "^0.3.0"
   }
 }
