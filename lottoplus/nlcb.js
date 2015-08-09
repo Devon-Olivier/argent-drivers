@@ -7,15 +7,6 @@
  * Platform: iojs
  ***********************************************************/
 'use strict';
-var consoleLog = function () {};
-var consoleError = function () {};
-module.exports = function(debug) {
-  if(debug) {
-    consoleLog = console.log;
-    consoleError = console.error;
-  }
-};
-
 //native node modules
 const HTTP = require('http');
 const QUERYSTRING = require('querystring');
@@ -55,10 +46,9 @@ const MAKETABLE = require('./table.js').makeTable;
  * @param options an object with properties corresponding to the host, path, 
  * query string, port, http verb, headers etc. for the request. 
  **/
-var requestHtml = function requestHtml(options) {
-
+const requestHtml = function requestHtml(options) {
   return new Promise(function (resolve, reject) {
-    var httpRequest = HTTP.request(options, function (res) {
+    const httpRequest = HTTP.request(options, function (res) {
       var html = "";
       res.setEncoding('utf8');
       res.on('data', function (chunk) {
@@ -76,7 +66,6 @@ var requestHtml = function requestHtml(options) {
 
     httpRequest.end(options.queryString);
   });
-
 };
 
 var installNlcbGet = function installNlcbGet(table) {
@@ -259,12 +248,12 @@ var getNewJackpot = function getNewJackpot() {
   return requestHtml(options).then(parse);
 };
 
-var consoleLog = function () {};
-var consoleError = function () {};
+var debugLog = function () {};
+var debugError = function () {};
 module.exports = function(debug) {
   if(debug) {
-    consoleLog = console.log.bind(console);
-    consoleError = console.error.bind(console);
+    debugLog = console.log.bind(console);
+    debugError = console.error.bind(console);
   }
   return module.exports;
 };
