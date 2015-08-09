@@ -29,7 +29,7 @@ const drawsForSaveTests = [{
     jackpot: 5649713.5,
     numberOfWinners: 0}];
 
-describe.skip('mongoLottoplusDriver', function() {
+describe('mongoLottoplusDriver', function() {
   describe('#getDraw(<invalidProperty>)', function() {
     it('should throw error for invalid argument', function() {
       return mongoLottoplusDriver.getDraw('lol').should.be.rejected();

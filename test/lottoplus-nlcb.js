@@ -17,7 +17,7 @@ var expectedDraws = [{
     numberOfWinners: 0}];
 
 
-describe.skip('nlcbLottoplusDriver', function() {
+describe('nlcbLottoplusDriver', function() {
   this.timeout(90000);
 
   describe('#getDraw(<invalidProperty>)', function() {
