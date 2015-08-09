@@ -16,8 +16,12 @@ const LODASH = require('lodash');
 
 const TYPE = require('./type.js');
 const MONGOCONF = require('../config/mongo-conf.json');
-//convert to object oriented module. It is more functional now
-//but it is jus message passing really isn't it?
+
+
+//TODO: convert to object oriented module. It is more functional now
+//but it is jus message passing really isn't it? Look at how it is 
+//used... STORE(<table>, <type>, <function>) ... which should be
+//TABLE.store(<type>, <function>) ent?
 const STORE = require('./table.js').store;
 const RETRIEVE = require('./table.js').retrieve;
 const MAKETABLE = require('./table.js').makeTable;
@@ -44,6 +48,7 @@ const installMongoGet = function installMongoGet(table) {
   };
 
   const getOne = function getOne(uri, queryObject) {
+    debugLog('connecting to ', uri);
     return MONGOCLIENT.connect(uri)
       .then(function(db) {
         return db.collection('draws').findOne(queryObject)
@@ -71,7 +76,6 @@ const installMongoGet = function installMongoGet(table) {
         .toArray()
         .then(function(draws) {
           db.close();
-          consoleLog('getArray got ', draws);
           return draws.map(mongoDrawToNlcbDraw);
         }, function(error) {
           db.close();
@@ -90,7 +94,7 @@ const installMongoGet = function installMongoGet(table) {
    * @param {uri} a mongodb uri
    * @param {number} a draw number
    **/
-  var getNumber = function getNumber(uri, number) {
+  const getNumber = function getNumber(uri, number) {
     const queryObject = {_id: number};
     return getOne(uri, queryObject);
   };
@@ -106,7 +110,7 @@ const installMongoGet = function installMongoGet(table) {
    * @param {uri} a mongodb uri
    * @param {numberRange} {start: <number>, end: <number>}
    **/
-  var getNumberList = function getNumberList(uri, numberRange) {
+  const getNumberList = function getNumberList(uri, numberRange) {
     const queryObject = {_id: {
         $gte: numberRange.start,
         $lt: numberRange.end
@@ -120,9 +124,9 @@ const installMongoGet = function installMongoGet(table) {
    *
    * Consume a Date and returns a promise for the draw with a that date
    *
-   * @param date representing a draw date;
+   * @param {date} representing a draw date;
    **/
-  var getDate = function getDate(uri, date) {
+  const getDate = function getDate(uri, date) {
     const queryObject = {drawDate: date};
     return getOne(uri, queryObject);
   };
@@ -142,7 +146,7 @@ const installMongoGet = function installMongoGet(table) {
    * Dates, return a promise for an array of Draws whose date property 
    * is in the range [start, end).
    **/
-  var getDateList = function getDateList (uri, dateRange) {
+  const getDateList = function getDateList (uri, dateRange) {
     const queryObject = {drawDate: {
         $gte: dateRange.start,
         $lt: dateRange.end
@@ -155,20 +159,20 @@ const getTable = MAKETABLE();
 installMongoGet(getTable);
 
 
-var getDraw = function getDraw(property) {
+const getDraw = function getDraw(property) {
   //idea taken from GENERIC OPERATOR discussions in SICP
-  var type = TYPE(property);
-  consoleLog(property, ' type is ', type);
+  const type = TYPE(property);
+  debugLog(property, ' type is ', type);
   if(!type) {
     return Promise.reject(new Error('dont understand type of ', property));
   }
 
-  var getter = RETRIEVE(getTable, type);
+  const getter = RETRIEVE(getTable, type);
   if(getter === undefined) {
     return Promise.reject(new Error("cannot get draw for this type of" +
           " draw property: " + property));
   }
-  return getter(MONGOCONF.uri, property);
+  return getter(MONGOURI, property);
 };
 
 const nlcbDrawToMongoDraw = function nlcbDrawToMongoDraw(nlcbDraw) {
@@ -176,47 +180,48 @@ const nlcbDrawToMongoDraw = function nlcbDrawToMongoDraw(nlcbDraw) {
   mongoDraw._id = nlcbDraw.drawNumber;
   return mongoDraw;
 };
+
 const saveOneDraw = function saveOneDraw (uri, draw) {
-  consoleLog('inside saveOneDraw');
-  consoleLog('got ', draw);
+  debugLog('inside saveOneDraw');
+  debugLog('got ', draw);
   const mongoDraw = nlcbDrawToMongoDraw(draw);
-  consoleLog('will insert ', mongoDraw);
+  debugLog('will insert ', mongoDraw);
   return MONGOCLIENT.connect(uri)
     .then(function (db) {
-      consoleLog('got db');
+      debugLog('got db');
       const collection =  db.collection('draws');
         return collection.insertOne(mongoDraw, {w:1})
         .then(function(result) {
-          consoleLog('inserted %s', result.insertedCount);
+          debugLog('inserted %s', result.insertedCount);
           db.close();
           return result;
         }, function(error){
           db.close();
-          consoleLog(error);
+          debugLog(error);
           throw error;
         });
     });
 };
 
 const saveManyDraws = function saveManyDraws (uri, draws) {
-  consoleLog('inside saveManyDraws');
-  consoleLog('got ', draws);
+  debugLog('inside saveManyDraws');
+  debugLog('got ', draws);
   const mongoDraws = draws.map(function (draw) {
     return nlcbDrawToMongoDraw (draw);
   });
-  consoleLog('will insert ', mongoDraws);
+  debugLog('will insert ', mongoDraws);
   return MONGOCLIENT.connect(uri)
     .then(function (db) {
-      consoleLog('got db');
+      debugLog('got db');
       const collection =  db.collection('draws');
       return collection.insertMany(mongoDraws, {w:1})
         .then(function(result) {
-          consoleLog('inserted %s', result.insertedCount);
+          debugLog('inserted %s', result.insertedCount);
           db.close();
           return result;
         }, function(error){
           db.close();
-          consoleLog(error);
+          debugError(error);
           throw error;
         });
     });
@@ -224,35 +229,35 @@ const saveManyDraws = function saveManyDraws (uri, draws) {
 
 
 //TODO://use generic operators to do the dispatch on type?
-var removeOneDraw = function removeOneDraw (uri, nlcbDraw) {
-  consoleLog('inside removeDraw');
-  consoleLog('asked to delete ', nlcbDraw);
+const removeOneDraw = function removeOneDraw (uri, nlcbDraw) {
+  debugLog('inside removeDraw');
+  debugLog('asked to delete ', nlcbDraw);
   const mongoDraw = nlcbDrawToMongoDraw(nlcbDraw);
-  consoleLog('abount to delete ', mongoDraw);
+  debugLog('abount to delete ', mongoDraw);
   return MONGOCLIENT.connect(uri)
     .then(function (db) {
-      consoleLog('got db');
+      debugLog('got db');
       const collection = db.collection('draws');
-      consoleLog('got draws collection');
+      debugLog('got draws collection');
       return collection.deleteOne(mongoDraw, {w:1})
         .then(function(result){ 
-          consoleLog('deleted %s draw', result.deletedCount);
+          debugLog('deleted %s draw', result.deletedCount);
           db.close();
           return result;
         }, function(error) {
-          consoleLog(error);
+          debugError(error);
           db.close();
           throw error;
         });
     });
 }; 
 
-var saveNewJackpot = function saveNewJackpot (uri, jackpot) {
+const saveNewJackpot = function saveNewJackpot (uri, jackpot) {
   return MONGOCLIENT.connect(uri)
     .then(function (db) {
-      consoleLog('got db');
+      debugLog('got db');
       const collection = db.collection('lottoplus-stats');
-      consoleLog('got draws collection');
+      debugLog('got draws collection');
       collection.removeMany.bind(collection);
       db.collection('stats').update({about: 'jackpot'},
           {$set:{newJackpot: jackpot}},
@@ -270,11 +275,11 @@ var saveNewJackpot = function saveNewJackpot (uri, jackpot) {
     });
 };
 
-var getNewJackpot = function getNewJackpot(uri) {
+const getNewJackpot = function getNewJackpot(uri) {
   return Q.ninvoke(
       MONGODB.MongoClient,
       'connect',
-      MONGOCONF.uri,
+      MONGOURI,
       {w:1})
   .then(function (db) {
     var deferred = Q.defer();
@@ -296,12 +301,16 @@ var getNewJackpot = function getNewJackpot(uri) {
   });
 };
 
-var consoleLog = function () {};
-var consoleError = function () {};
+var debugLog = function () {};
+var debugError = function () {};
+var MONGOURI = MONGOCONF.uri;
 module.exports = function(debug) {
   if(debug) {
-    consoleLog = console.log.bind(console);
-    consoleError = console.error.bind(console);
+    debugLog = console.log.bind(console);
+    debugError = console.error.bind(console);
+    MONGOURI = MONGOCONF.debugUri;
+    debugLog('MONGOCONF is ', MONGOCONF)
+    debugLog('MONGOURI set to ', MONGOURI);
   }
   return module.exports;
 };
@@ -309,17 +318,16 @@ module.exports = function(debug) {
 module.exports.getDraw = getDraw;
 
 module.exports.removeOneDraw = function(query) {
-  return removeOneDraw(MONGOCONF.uri, query);
+  return removeOneDraw(MONGOURI, query);
 };
 
 module.exports.saveManyDraws = function (draws) {
-  return saveManyDraws(MONGOCONF.uri, draws);
+  return saveManyDraws(MONGOURI, draws);
 };
 
 module.exports.saveOneDraw = function (draws) {
-  return saveOneDraw(MONGOCONF.uri, draws);
+  return saveOneDraw(MONGOURI, draws);
 };
 
 module.exports.getNewJackpot = getNewJackpot;
 module.exports.saveNewJackpot = saveNewJackpot;
-
