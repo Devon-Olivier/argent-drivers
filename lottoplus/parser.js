@@ -32,9 +32,9 @@ const ERROR = require('./error-names.js');
 var parse = function parse(html) {
   var drawh2Regexp = /<h2.*?Draw.*?Winners.*?\d+/;
   var drawNumberRegexp = /Draw\s*#.*?(\d+)/;
-  var drawDateRegexp = /Date.*?(\d{2}).*?([a-zA-Z]{3}).*?(\d{2})/;
+  var drawDateRegexp = /Date.*?(\d{1,2}).*?([a-zA-Z]{3}).*?(\d{2}).*?Numbers/;
   var numbersDrawnRegexp = /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/;
-  var jackpotRegexp = /Jackpot.*?(\d+\.\d{2})/;
+  var jackpotRegexp = /Jackpot.*?(\d+(\.\d{2})?)/;
   var winnersRegexp = /Winners.*?(\d+)/;
 
   const draw = {};
@@ -89,13 +89,16 @@ var parse = function parse(html) {
 
   var jackpotMatch = h2.match(jackpotRegexp);
   if(jackpotMatch === null) {
+    debugLog('jackpot match attempt: ', jackpotMatch);
     throw new Error("Couldn't parse draw jackpot from h2:\n", h2);
   }
-  draw.jackpot = +jackpotMatch[1];
+  else {
+    draw.jackpot = +jackpotMatch[1];
+  }
 
   var numberOfWinnersMatch = h2.match(winnersRegexp);
   if(numberOfWinnersMatch === null) {
-    throw new Error("Couldn't parse draw Date from h2:\n", h2);
+    throw new Error("Couldn't parse draw number of winners from h2:\n", h2);
   }
   draw.numberOfWinners = +numberOfWinnersMatch[1];
 
