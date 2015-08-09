@@ -1,175 +1,70 @@
+"use strict";
+var nlcbLottoplusDriver = require('../lottoplus/nlcb')(true);
+var MOMENT = require('moment');
 var SHOULD = require('should');
-var nlcbLottoplusDriver = require('../lottoplus/nlcb');
-var MOMENT = nlcbLottoplusDriver.MOMENT;
-
-var stringDateStart = "2012 12 1";
-var dateStart = new Date(stringDateStart);
-var arrayDateStart = [2012, 11, 1];
-
-var stringDateEnd = "2012 12 6";
-var dateEnd = new Date(stringDateEnd);
-
-var stringNumberStart = '1190';
-var numberStart = 1190;
-var stringNumberEnd = '1192';
-var numberEnd = 1192;
+require('should-promised');
 
 var expectedDraws = [{
-  number: 1190,
-  date: new Date(stringDateStart),
-  numbersPlayed: [20, 26, 28, 32, 34, 8],
+  drawNumber: 1190,
+  drawDate: new Date("2012 12 1"),
+  numbersDrawn: [20, 26, 28, 32, 34, 8],
   jackpot: 4987528.04,
   numberOfWinners: 0}, {
-  number: 1191,
-  date: MOMENT(new Date(stringDateEnd)).subtract(1, 'day').toDate(),
-  numbersPlayed: [7, 15, 16, 24, 32, 5],
-  jackpot: 5649713.5,
-  numberOfWinners: 0}];
+    drawNumber: 1191,
+    drawDate: new Date("2012 12 5"),
+    numbersDrawn: [7, 15, 16, 24, 32, 5],
+    jackpot: 5649713.5,
+    numberOfWinners: 0}];
 
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(invalidProperty)', function() {
-    it('should throw error for invalid argument', function(done) {
-      nlcbLottoplusDriver.getDraw('lol')
-      .then(function (value) {
-        SHOULD.not.exist(value);
-        done();
-      }, function (error) {
-        error.should.be.an.instanceof(TypeError);
-        done();
-      }).done();
+
+describe.skip('nlcbLottoplusDriver', function() {
+  this.timeout(90000);
+
+  describe('#getDraw(<invalidProperty>)', function() {
+    it('should throw error for invalid argument', function() {
+      return nlcbLottoplusDriver.getDraw('lol').should.be.rejected();
+    });
+  });
+
+  describe('#getDraw(<number>)', function() {
+    it('should accept number', function() {
+      return nlcbLottoplusDriver.getDraw(expectedDraws[0].drawNumber)
+        .should.be.fulfilledWith(expectedDraws[0]);
+    });
+  });
+
+  describe('#getDraw(<number-range>)', function() {
+    it('should accept ranges with number start and end', function() {
+      return nlcbLottoplusDriver.getDraw({
+        start:expectedDraws[0].drawNumber, end:expectedDraws[1].drawNumber+1})
+        .should.be.fulfilledWith(expectedDraws);
+    });
+  });
+
+  describe('#getDraw(<date>)', function() {
+    it('should accept Date', function(done) {
+      nlcbLottoplusDriver.getDraw(expectedDraws[0].drawDate)
+        .then(function(draw) {
+          draw.should.be.eql(expectedDraws[0]);
+          done(); 
+        });
+    });
+  });
+
+  describe('#getDraw(<date-range>)', function() {
+    it('should accept ranges with date start and end', function() {
+      return nlcbLottoplusDriver.getDraw({
+        start: expectedDraws[0].drawDate,
+        end:MOMENT(expectedDraws[1].drawDate).add(1, 'days').toDate()
+      })
+      .should.be.fulfilledWith(expectedDraws);
+    });
+  });
+
+  describe('#getNewJackpot()', function () {
+    it('should return a number', function () {
+      return nlcbLottoplusDriver.getNewJackpot()
+        .should.eventually.be.Number();
     });
   });
 });
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(stringDate)', function() {
-    it('should accept string dates', function(done) {
-      nlcbLottoplusDriver.getDraw(stringDateStart)
-      .then(function(draw) {
-        draw.should.eql(expectedDraws[0]);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with string start and end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:stringDateStart, end:stringDateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with Date start and string end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:dateStart, end:stringDateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with Date start and end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:dateStart, end:dateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with string start and Date end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:stringDateStart, end:dateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDrawNumber(stringNumber)', function() {
-    it('should accept numbers in srings', function(done) {
-      nlcbLottoplusDriver.getDraw(stringNumberStart)
-      .then(function(draw) {
-        draw.should.eql(expectedDraws[0]);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with string start and end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:stringNumberStart, end:stringNumberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with number start and string end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:numberStart, end:stringNumberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with number start and end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:numberStart, end:numberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with string start and Date end', function(done) {
-      nlcbLottoplusDriver.getDraw({start:stringNumberStart, end:numberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('nlcbLottoplusDriver', function() {
-  describe('#getDraw(datAsArray)', function() {
-    it('should accept ranges with array representation of a date', function(done) {
-      nlcbLottoplusDriver.getDraw(arrayDateStart)
-      .then(function(draws) {
-        draws.should.eql(expectedDraws[0]);
-        done(); 
-      }).done();
-    });
-  });
-});
-

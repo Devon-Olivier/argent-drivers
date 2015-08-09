@@ -1,31 +1,60 @@
 var SHOULD = require('should');
-var nlcbLottoplusDriver = require('../lottoplus/nlcb');
+var parser = require('../lottoplus/parser')();
 
-var html = '<table>' +
-  '<tbody>'+
-    '<tr> <td>Stupid header with colspan=2</td> </tr>'+
-    '<tr> <td>Draw #</td> <td>1190</td> </tr>'+
-    '<tr> <td>Date</td> <td>01-Dec-12</td> </tr>'+
-    '<tr> <td>Numbers</td> <td> 20, 26, 28, 32, 34 -PB: 8</td> </tr>'+
-    '<tr> <td>Jackpot</td> <td> $4,987,528.04</td> </tr>'+
-    '<tr> <td># Winners</td> <td>0</td> </tr>'+
-  '</tbody>'+
-'</table>';
-var expectedDraw = {
-  number: 1190,
-  date: new Date('2012 12 1'),
-  numbersPlayed: [20, 26, 28, 32, 34, 8],
-  jackpot: 4987528.04,
-  numberOfWinners: 0
-};
+var drawHtmlArray = [
+  '<h2><strong> Draw #: </strong>1 |'+
+  '<strong> Date: </strong>04-Jul-01<br>'+
+  '<strong> Numbers Drawn: </strong> | 4 | 10 | 11 | 12 | 18 and powerball  | 2 |'+
+  '<br><strong> Jackpot: </strong>2691380.55 | '+
+  '<strong> Winners: </strong>0<br></h2>',
 
-describe('lottoplus-nlcb', function(){
-  describe('_parseDrawHtml', function(){
-    it('should give draw number 1190', function(){
-      nlcbLottoplusDriver._parseDrawHtml(html)
-        .then(function(draw){
-          draw.should.eql(expectedDraw);
-        }).done();
+  '<h2><strong> Draw #: </strong>1393 | '+
+  '<strong> Date: </strong>22_nov-14<br>'+
+  '<strong> Numbers Drawn: </strong> | 7 | 8 | 18 | 23 | 30 and powerball  | 10 | '+
+  '<br><strong> Jackpot: </strong>9671817.28 | '+
+  '<strong> Winners: </strong>0<br></h2>',
+
+  '<h2><strong> Draw #: </strong>1464 | '+
+  '<strong> Date: </strong>1-Aug-15<br>'+
+  '<strong> Numbers Drawn: </strong> | 6 | 11 | 20 | 33 | 35 and powerball  | 2 | '+
+  '<br><strong> Jackpot: </strong>2000000 | '+
+  '<strong> Winners: </strong>0<br></h2>'
+];
+
+
+var expectedDraws = [{
+  drawNumber: 1,
+  drawDate: new Date('2001 7 4'),
+  numbersDrawn: [4, 10, 11, 12, 18, 2],
+  jackpot: 2691380.55,
+  numberOfWinners: 0}, {
+    drawNumber: 1393,
+    drawDate: new Date('2014 11 22'),
+    numbersDrawn: [7, 8, 18, 23, 30, 10],
+    jackpot: 9671817.28,
+    numberOfWinners: 0}, {
+    drawNumber: 1464,
+    drawDate: new Date('2015 8 1'),
+    numbersDrawn: [6, 11, 20, 33, 35, 2],
+    jackpot: 2000000,
+    numberOfWinners: 0}
+];
+
+describe('parser', function(){
+  describe('#parser', function(){
+    it('should throw on invalid html', function() {
+      SHOULD.throws(function(){
+        parser.parse("Shit");
+      });
+    });
+
+    drawHtmlArray.forEach(function(html, i) {
+      it('should give parse draw number '+
+          expectedDraws[i].drawNumber +
+          ' correctly', function(){
+        const draw = parser.parse(html);
+        draw.should.be.eql(expectedDraws[i]);
+      });
     });
   });
 });

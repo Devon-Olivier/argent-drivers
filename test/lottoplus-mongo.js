@@ -1,223 +1,116 @@
-var SHOULD = require('should');
-var mongoLottoplusDriver = require('../lottoplus/mongo');
-var MOMENT = mongoLottoplusDriver.MOMENT;
+'use strict';
+const SHOULD = require('should');
+require('should-promised');
 
-var stringDateStart = "2012 12 1";
-var dateStart = new Date(stringDateStart);
-var arrayDateStart = [2012, 11, 1];
+const MOMENT = require('moment');
+const mongoLottoplusDriver = require('../lottoplus/mongo')(true);
 
-var stringDateEnd = "2012 12 6";
-var dateEnd = new Date(stringDateEnd);
-
-var stringNumberStart = '1190';
-var numberStart = 1190;
-var stringNumberEnd = '1192';
-var numberEnd = 1192;
-
-var expectedDraws = [{
-  number: 1190,
-  date: new Date(stringDateStart),
-  numbersPlayed: [20, 26, 28, 32, 34, 8],
-  jackpot: 4987528.04,
+const drawsForGetTests = [{
+  drawNumber: 1,
+  drawDate: new Date('2001 7 4'),
+  numbersDrawn: [ 4, 10, 11, 12, 18, 2 ],
+  jackpot: 2691380.55,
   numberOfWinners: 0}, {
-  number: 1191,
-  date: MOMENT(stringDateEnd).subtract(1, 'day').toDate(),
-  numbersPlayed: [7, 15, 16, 24, 32, 5],
-  jackpot: 5649713.5,
+  drawNumber: 2,
+  drawDate: new Date('2001 7 7'),
+  numbersDrawn: [ 2, 10, 11, 26, 28, 10 ],
+  jackpot: 3140281.24,
   numberOfWinners: 0}];
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(invalidProperty)', function() {
-    it('should throw error for invalid argument', function(done) {
-      mongoLottoplusDriver.getDraw('lol')
-      .then(function (value) {
-        SHOULD.not.exist(value);
-        done();
-      }, function (error) {
-        error.should.be.an.instanceof(TypeError);
-        done();
-      }).done();
+const drawsForSaveTests = [{
+  drawNumber: 1190,
+  drawDate: new Date( "2012 12 1"),
+  numbersDrawn: [20, 26, 28, 32, 34, 8],
+  jackpot: 4987528.04,
+  numberOfWinners: 0}, {
+    drawNumber: 1191,
+    drawDate: new Date( "2012 12 6"),
+    numbersDrawn: [7, 15, 16, 24, 32, 5],
+    jackpot: 5649713.5,
+    numberOfWinners: 0}];
+
+describe.skip('mongoLottoplusDriver', function() {
+  describe('#getDraw(<invalidProperty>)', function() {
+    it('should throw error for invalid argument', function() {
+      return mongoLottoplusDriver.getDraw('lol').should.be.rejected();
     });
   });
-});
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(stringDate)', function() {
-    it('should accept string dates', function(done) {
-      mongoLottoplusDriver.getDraw(stringDateStart)
-      .then(function(draw) {
-        draw.should.eql(expectedDraws[0]);
-        done(); 
-      }).done();
+  describe('#getDraw(<number>)', function() {
+    it('should accept number', function() {
+      const drawNumber = drawsForGetTests[0].drawNumber;
+      return mongoLottoplusDriver.getDraw(drawNumber)
+        .should.be.fulfilledWith(drawsForGetTests[0]);
     });
   });
-});
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with string start and end', function(done) {
-      mongoLottoplusDriver.getDraw({start:stringDateStart, end:stringDateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
+  describe('#getDraw(<numberRange>)', function() {
+    it('should accept number ranges', function() {
+      const startNumber = drawsForGetTests[0].drawNumber;
+      const endNumber = drawsForGetTests[drawsForGetTests.length - 1].drawNumber + 1;
+      return mongoLottoplusDriver.getDraw({start: startNumber, end: endNumber})
+        .should.be.fulfilledWith(drawsForGetTests);
     });
   });
-});
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with Date start and string end', function(done) {
-      mongoLottoplusDriver.getDraw({start:dateStart, end:stringDateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
+  describe('#getDraw(<date>)', function() {
+    it('should accept date', function() {
+      const date = drawsForGetTests[0].drawDate;
+      return mongoLottoplusDriver.getDraw(date)
+        .should.be.fulfilledWith(drawsForGetTests[0]);
     });
   });
-});
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with Date start and end', function(done) {
-      mongoLottoplusDriver.getDraw({start:dateStart, end:dateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
+  describe('#getDraw(<dateRange>)', function() {
+    it('should accept date ranges', function() {
+      const dateStart = drawsForGetTests[0].drawDate;
+      const dateEnd = MOMENT(drawsForGetTests[drawsForGetTests.length - 1].drawDate)
+        .add(1, 'days').toDate();
+      return mongoLottoplusDriver.getDraw({start:dateStart, end:dateEnd})
+      .should.be.fulfilledWith(drawsForGetTests);
     });
   });
-});
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(dateRange)', function() {
-    it('should accept ranges with string start and Date end', function(done) {
-      mongoLottoplusDriver.getDraw({start:stringDateStart, end:dateEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
+  describe('#saveOneDraw(<draw>)', function() {
+    it('should save single draw correctly', function() {
+      return mongoLottoplusDriver.saveOneDraw(drawsForSaveTests[0])
+        .then(function(result) {
+          result.insertedCount.should.be.eql(1);
+          return mongoLottoplusDriver.removeOneDraw(drawsForSaveTests[0])
+          .then(function(result) {
+            result.deletedCount.should.be.eql(1);
+          });
+        });
     });
   });
-});
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDrawNumber(stringNumber)', function() {
-    it('should accept numbers in srings', function(done) {
-      mongoLottoplusDriver.getDraw(stringNumberStart)
-      .then(function(draw) {
-        draw.should.eql(expectedDraws[0]);
-        done(); 
-      },
-      function (error) {
-        error.should.not.exist();
-      }).done();
+  describe('#saveManyDraws(<draws>)', function() {
+    it('should save arrays of draws correctly', function() {
+      return mongoLottoplusDriver.saveManyDraws(drawsForSaveTests)
+        .then(function(result) {
+          result.insertedCount.should.be.eql(2);
+          const removePromises = drawsForSaveTests.map(function (draw) {
+            return mongoLottoplusDriver.removeOneDraw(draw);
+          });
+          return Promise.all(removePromises).then(function(results) {
+            results.forEach(function (result) {
+              result.deletedCount.should.be.eql(1);
+            });
+          });
+        });
     });
   });
-});
 
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with string start and end', function(done) {
-      mongoLottoplusDriver.getDraw({start:stringNumberStart, end:stringNumberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with number start and string end', function(done) {
-      mongoLottoplusDriver.getDraw({start:numberStart, end:stringNumberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with number start and end', function(done) {
-      mongoLottoplusDriver.getDraw({start:numberStart, end:numberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(numberRange)', function() {
-    it('should accept ranges with string start and Date end', function(done) {
-      mongoLottoplusDriver.getDraw({start:stringNumberStart, end:numberEnd})
-      .then(function(draws) {
-        draws.should.eql(expectedDraws);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('mongoLottoplusDriver', function() {
-  describe('#getDraw(dateAsArray)', function() {
-    it('should accept ranges with array representation of a date', function(done) {
-      mongoLottoplusDriver.getDraw(arrayDateStart)
-      .then(function(draws) {
-        draws.should.eql(expectedDraws[0]);
-        done(); 
-      }).done();
-    });
-  });
-});
-
-describe('mongoLottoplusDriver', function() {
-  describe('#saveDraw(draw)', function() {
-    it('should save single draw correctly', function(done) {
-      var draw = {number: -1310};
-      mongoLottoplusDriver.saveDraw(draw)
-      .then(function(draws) {
-        draws.should.eql([draw]);
-        mongoLottoplusDriver.removeDraw(draw).done();
-        done(); 
-      },
-      function (error) {
-        error.should.not.be.ok();
-        done();
-      }).done();
-    });
-  });
-});
-
-describe('mongoLottoplusDriver', function() {
-  describe('#saveDraw(draws)', function() {
-    it('should save arrays of draws correctly', function(done) {
-      var doc1 = {number: -1309};
-      var doc2 = {number: -1310};
-      var draws = [doc1, doc2];
-      mongoLottoplusDriver.saveDraw(draws)
-      .then(function(savedDraws) {
-        savedDraws.should.eql(draws);
-        mongoLottoplusDriver.removeDraw({number: {$lt: 0}})
-          .then(function (n) {
-            n.should.eql(2);
-            done(); 
-          },
-          function (error) {
-            console.log('error removing docs');
-            SHOULD.not.exist(error);
-            done(); 
-          }).done();
-      },
-      function (error) {
-        SHOULD.not.exist(error);
-        done();
-      }).done();
+  describe('#removeOneDraw(<draw>)', function() {
+    it('should delete draw correctly', function() {
+      return mongoLottoplusDriver.saveOneDraw(drawsForSaveTests[0])
+        .then(function(result) {
+          result.insertedCount.should.be.eql(1);
+          return mongoLottoplusDriver.removeOneDraw(drawsForSaveTests[0])
+          .then(function(result) {
+            result.deletedCount.should.be.eql(1);
+          });
+        });
     });
   });
 });
