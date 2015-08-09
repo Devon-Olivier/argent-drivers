@@ -1,5 +1,6 @@
 'use strict';
 
+const MOMENT = require('moment');
 const ERROR = require('./error-names.js');
 /** 
  * a Draw is an Object with the following properties
@@ -25,25 +26,33 @@ const ERROR = require('./error-names.js');
  *    jackpot: 4987528.04,
  *    numberOfWinners: 0
  *  };
+ *  NOTE: THE RETURNED HTML FROM NLCB IS INCONSISTENT. DRAW NUMBER 1393 HAS A
+ *  DRAW STRING OF 22_Nov-12. The '_' is the inconsistency here.
  **/
 var parse = function parse(html) {
   var drawh2Regexp = /<h2.*?Draw.*?Winners.*?\d+/;
   var drawNumberRegexp = /Draw\s*#.*?(\d+)/;
-  var drawDateRegexp = /Date.*(\d{2}\-\w{3}\-\d{2})/;
+  var drawDateRegexp = /Date.*?(\d{2}).*?([a-zA-Z]{3}).*?(\d{2})/;
   var numbersDrawnRegexp = /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/;
   var jackpotRegexp = /Jackpot.*?(\d+\.\d{2})/;
   var winnersRegexp = /Winners.*?(\d+)/;
 
-  var draw = {};
+  const draw = {};
 
-  var h2match = html.match(drawh2Regexp);
+  const h2match = html.match(drawh2Regexp);
+  var h2;
   if(h2match === null){
+    debugError('Found no draw in any h2 tag of html: \n');
     const error = new Error('Found no draw in any h2 tag of html: \n', html);
     error.name = ERROR.NODRAW;
     throw error;
   }
-
-  var h2 = h2match[0];
+  else {
+    debugLog('matched an h2 with a draw');
+    debugLog('match object: ', h2match);
+    h2 = h2match[0];
+    debugLog('h2: ', h2);
+  }
 
   var drawNumberMatch = h2.match(drawNumberRegexp);
   if(drawNumberMatch === null) {
@@ -55,14 +64,27 @@ var parse = function parse(html) {
   if(drawDateMatch === null) {
     throw new Error("Couldn't parse draw Date from h2:\n", h2);
   }
-  draw.drawDate = new Date(drawDateMatch[1]);
+  else {
+    debugLog('matched a date in h2');
+    debugLog('match object: ', drawDateMatch);
+    const year = drawDateMatch[3];
+    debugLog('drawYear: ', year);
+    const month = drawDateMatch[2];
+    debugLog('drawMonth: ', month);
+    const day = drawDateMatch[1];
+    debugLog('drawDay: ', day);
+    const dateString = year + ' ' + month + ' ' + day;
+    debugLog('date: ', dateString);
+    draw.drawDate = MOMENT(dateString, 'YY MMM DD', 'en').toDate();
+    debugLog('drawDate: ', draw.drawDate);
+  }
 
   var numbersDrawnMatch = h2.match(numbersDrawnRegexp);
   if(numbersDrawnMatch === null) {
     throw new Error("Couldn't parse numbers drawn from h2:\n", h2);
   }
   draw.numbersDrawn = numbersDrawnMatch.slice(1,7).map(function(n) {
-   return +n
+    return +n
   });
 
   var jackpotMatch = h2.match(jackpotRegexp);
@@ -80,4 +102,13 @@ var parse = function parse(html) {
   return draw;
 };
 
-exports.parse = parse;
+var debugLog = function () {};
+var debugError = function () {};
+module.exports = function(debug) {
+  if(debug) {
+    debugLog = console.log.bind(console);
+    debugError = console.error.bind(console);
+  }
+  return module.exports;
+};
+module.exports.parse = parse;
