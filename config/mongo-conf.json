@@ -1,5 +1,6 @@
 {
   "uri": "mongodb://localhost:27017/lottoplus?auto_reconnect",
+  "debugUri" : "mongodb://localhost:27017/lottoplustest?auto_reconnect",
   "username": null,
   "password": null
 }
