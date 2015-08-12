@@ -29,6 +29,18 @@ const drawsForSaveTests = [{
     jackpot: 5649713.5,
     numberOfWinners: 0}];
 
+const drawsForStatsTest = [{
+  drawNumber: 1190,
+  drawDate: new Date( "2012 12 1"),
+  numbersDrawn: [20, 26, 28, 32, 34, 8],
+  jackpot: 4987528.04,
+  numberOfWinners: 0}, {
+    drawNumber: 1191,
+    drawDate: new Date( "2012 12 6"),
+    numbersDrawn: [7, 15, 16, 24, 32, 5],
+    jackpot: 5649713.5,
+    numberOfWinners: 0}];
+
 describe('mongoLottoplusDriver', function() {
   describe('#getDraw(<invalidProperty>)', function() {
     it('should throw error for invalid argument', function() {
@@ -113,4 +125,49 @@ describe('mongoLottoplusDriver', function() {
         });
     });
   });
+
+  
+  describe('#updateJackpotStats(<jackpotInfo>, #getJackpotStats())', function() {
+    it('should compute and save the correct jackpot stats for a new jackpot that is '+
+        'higher than the highest in database', function(done) {
+          const jackpot = drawsForStatsTest[1].jackpot;
+          const drawNumber = drawsForStatsTest[1].drawNumber;
+          mongoLottoplusDriver.saveOneDraw(drawsForStatsTest[0])
+
+            .then(function(result) {
+              mongoLottoplusDriver.updateJackpotStats({jackpot: jackpot, drawNumber:drawNumber})
+                .then(function(result) {
+
+                  mongoLottoplusDriver.getJackpotStats()
+                    .then(function(stats) {
+
+                      stats.highest.jackpot.should.be.eql(jackpot);
+                      stats.highest.drawNumber.should.be.eql(drawNumber);
+                      mongoLottoplusDriver.removeOneDraw(drawsForStatsTest[0]);
+                      done();
+                    });
+                });
+            });
+        });
+
+    it('should compute and save the correct jackpot stats for a new jackpot that is '+
+        'lower than the highest in the database', function(done) {
+          const jackpot = drawsForStatsTest[0].jackpot;
+          const drawNumber = drawsForStatsTest[0].drawNumber;
+          mongoLottoplusDriver.saveOneDraw(drawsForStatsTest[1])
+            .then(function(result) {
+              mongoLottoplusDriver.updateJackpotStats({jackpot: jackpot, drawNumber:drawNumber})
+                .then(function(result) {
+                  mongoLottoplusDriver.getJackpotStats()
+                    .then(function(stats) {
+                      stats.highest.jackpot.should.be.eql(drawsForStatsTest[1].jackpot);
+                      stats.highest.drawNumber.should.be.eql(drawsForStatsTest[1].drawNumber);
+                      mongoLottoplusDriver.removeOneDraw(drawsForStatsTest[1]);
+                      done();
+                    });
+                });
+            });
+        });
+  });
 });
+
