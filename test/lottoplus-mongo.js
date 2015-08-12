@@ -114,13 +114,14 @@ describe('mongoLottoplusDriver', function() {
   });
 
   describe('#removeOneDraw(<draw>)', function() {
-    it('should delete draw correctly', function() {
+    it('should delete draw correctly', function(done) {
       return mongoLottoplusDriver.saveOneDraw(drawsForSaveTests[0])
         .then(function(result) {
           result.insertedCount.should.be.eql(1);
           return mongoLottoplusDriver.removeOneDraw(drawsForSaveTests[0])
           .then(function(result) {
             result.deletedCount.should.be.eql(1);
+            done();
           });
         });
     });
