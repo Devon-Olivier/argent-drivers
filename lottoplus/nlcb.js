@@ -6,6 +6,7 @@
  * nlcb database at nlcb.co.tt
  * Platform: iojs
  ***********************************************************/
+//TODO: IMPROVE ERROR REPORTING AND DETECTING
 'use strict';
 //native node modules
 const HTTP = require('http');
