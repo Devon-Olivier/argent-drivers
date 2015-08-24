@@ -323,6 +323,8 @@ const saveManyDraws = function saveManyDraws (uri, draws) {
 
 
 /**
+ * TODO: fix this!! all we need is the draw number in order to delete. So take
+ * consume a uri and a draw number
  * removeOneDraw: uri, Draw -> Promise for a native mongodb driver resultObject
  *
  * consume a mongodb uri specifying a database and a Draw and return a
