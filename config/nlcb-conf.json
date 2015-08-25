@@ -8,5 +8,7 @@
   },
   "getDrawNumberPath": "/app/index.php/lpresults/lpdrawnum",
   "getDrawDatePath": "/app/index.php/lpresults/lpdatesch",
-  "getNewJackpotPath": "/app/index.php/results/grandprize/"
+  "getNextJackpotPath": "/app/index.php/results/grandprize/",
+  "getNextDrawNumberPath": "/app/index.php/allresultscon",
+  "getNextDrawDatePath": "/app/index.php/allresultscon"
 } 

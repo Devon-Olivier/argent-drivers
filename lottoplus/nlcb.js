@@ -11,7 +11,6 @@
 //native node modules
 const HTTP = require('http');
 const QUERYSTRING = require('querystring');
-const URL = require('url');
 
 //external node modules
 const MOMENT = require('moment');
@@ -63,7 +62,7 @@ const requestHtml = function requestHtml(options) {
 
     httpRequest.on('error', function (e) {
       reject(e);
-    })
+    });
 
     httpRequest.end(options.queryString);
   });
@@ -225,28 +224,120 @@ var getDraw = function getDraw(property) {
 };
 
 
-var getNewJackpot = function getNewJackpot() {
+const getNextDraw = function getNextDraw() {
+    debugLog('getNextDraw: ');
   //TODO: put this in parser.js?
-  var parse = function parse(html) {
+  const parseJackpot = function parseJackpot(html) {
+    debugLog('in parseJackpot of getNextDraw');
+    var jackpot;
     const jackpotH1Regexp = /<h1.*?headfit.*?((\d+?,)+?(\d+)\s*?\.\d{2})/;
     const jackpotMatch = html.match(jackpotH1Regexp);
     if(jackpotMatch === null) {
       throw new Error('cannot parse jackpot in ' + html);
     }
-    const jackpot = jackpotMatch[1].replace(/,/g,'');
-    return +jackpot;
+    else {
+      jackpot = +jackpotMatch[1].replace(/,/g,'');
+      debugLog('match jackpot: ', jackpot);
+    }
+    return jackpot;
   };
 
+  const parseDate = function parseDate(html) {
+    debugLog('in parseDate of getNextDraw');
+    var date;
+    const dateRegexp = /Lotto[\s\S]*?Plus[\s\S]*?Date[\s\S]*?>(\d{1,2})[\s\S]*?([a-zA-Z]{3})[\s\S]*?(\d{2})/;
+    const dateMatch = html.match(dateRegexp);
+    if(dateMatch === null) {
+      throw new Error('cannot parse date in: ' + html);
+    }
+    else {
+      //debugLog('match date: ', dateMatch);
+      const year = dateMatch[3];
+      debugLog('drawYear: ', year);
+      const month = dateMatch[2];
+      debugLog('drawMonth: ', month);
+      const day = dateMatch[1];
+      debugLog('drawDay: ', day);
+      const dateString = year + ' ' + month + ' ' + day;
+      debugLog('dateString: ', dateString);
 
-  var options = {
+      const nextWed = MOMENT(dateString, 'YY MMM D', 'en').day(10).toDate();
+      const nextSat = MOMENT(dateString, 'YY MMM D', 'en').day(13).toDate();
+      date = nextWed < nextSat ? nextWed : nextSat;
+      debugLog('nextWed: ', nextWed);
+      debugLog('nextSat: ', nextSat);
+      debugLog('date: ', date);
+    }
+    return date;
+  };
+
+  const parseNumber = function parseNumber(html) {
+    debugLog('in parseNumber of getNextDraw');
+    var number;
+    const numberRegexp = /Lotto[\S\s]*?Plus[\S\s]*?Date[\s\S]*?Draw[\S\s]*?#[\s\S]*?>(\d+)/;
+    const numberMatch = html.match(numberRegexp);
+    //debugLog('parseNumber: ', numberMatch);
+    if(numberMatch === null) {
+      throw new Error('cannot parse number in ' + html);
+    }
+    else {
+      number = +numberMatch[1] + 1;
+      debugLog('number: ', number);
+    }
+    return number;
+  };
+
+//TODO: use high level http client "request" or "superagent"
+  const jackpotOptions = {
     host: NLCBCONF.host,
     port: NLCBCONF.port,
     method: 'GET',//TODO: store this in config?
     headers: NLCBCONF.headers,
-    path: NLCBCONF.getNewJackpotPath,
+    path: NLCBCONF.getNextJackpotPath
   };
 
-  return requestHtml(options).then(parse);
+  const numberOptions = {
+    host: NLCBCONF.host,
+    port: NLCBCONF.port,
+    method: 'GET',//TODO: store this in config?
+    headers: NLCBCONF.headers,
+    path: NLCBCONF.getNextDrawNumberPath
+  };
+
+  const dateOptions = {
+    host: NLCBCONF.host,
+    port: NLCBCONF.port,
+    method: 'GET',//TODO: store this in config?
+    headers: NLCBCONF.headers,
+    path: NLCBCONF.getNextDrawDatePath
+  };
+
+  const promises = [
+    requestHtml(numberOptions).then(function(html) {
+      return parseNumber(html);
+    }).catch(function(error){
+      debugLog(error);
+      throw error;
+    }),
+    requestHtml(dateOptions).then(function(html) {
+      return parseDate(html);
+    }).catch(function(error){
+      debugLog(error);
+      throw error;
+    }),
+    requestHtml(jackpotOptions).then(function(html) {
+      return parseJackpot(html);
+    }).catch(function(error) {
+      debugLog(error);
+    })
+  ];
+  return Promise.all(promises).then(function(arr) {
+    return {
+      drawNumber: arr[0],
+      drawDate: arr[1],
+      jackpot: arr[2]
+    };
+  });
 };
 
 var debugLog = function () {};
@@ -260,4 +351,4 @@ module.exports = function(debug) {
 };
 
 module.exports.getDraw = getDraw;
-module.exports.getNewJackpot = getNewJackpot;
+module.exports.getNextDraw = getNextDraw;
