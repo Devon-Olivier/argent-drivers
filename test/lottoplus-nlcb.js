@@ -61,10 +61,10 @@ describe('nlcbLottoplusDriver', function() {
     });
   });
 
-  describe('#getNewJackpot()', function () {
-    it('should return a number', function () {
-      return nlcbLottoplusDriver.getNewJackpot()
-        .should.eventually.be.Number();
+  describe('#getNextDraw()', function () {
+    it('should return a get the latest jackpot, next draw number and date', function () {
+      return nlcbLottoplusDriver.getNextDraw()
+      .should.be.fulfilled();
     });
   });
 });
