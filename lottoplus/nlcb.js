@@ -261,12 +261,18 @@ const getNextDraw = function getNextDraw() {
       const dateString = year + ' ' + month + ' ' + day;
       debugLog('dateString: ', dateString);
 
-      const nextWed = MOMENT(dateString, 'YY MMM D', 'en').day(10).toDate();
-      const nextSat = MOMENT(dateString, 'YY MMM D', 'en').day(13).toDate();
-      date = nextWed < nextSat ? nextWed : nextSat;
-      debugLog('nextWed: ', nextWed);
-      debugLog('nextSat: ', nextSat);
-      debugLog('date: ', date);
+      const lastDrawDate = MOMENT(dateString, 'YY MMM D', 'en').toDate();
+      const satOfDrawWeek = MOMENT(lastDrawDate).day(6).toDate();
+      const wedOfNextWeek = MOMENT(lastDrawDate).day(10).toDate();
+
+      if(lastDrawDate >= satOfDrawWeek) {
+        date = wedOfNextWeek;
+      }
+      else { 
+        date = satOfDrawWeek;
+      }
+      debugLog('last draw date: ', lastDrawDate);
+      debugLog('next draw date: ', date);
     }
     return date;
   };
