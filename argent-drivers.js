@@ -1,11 +1,5 @@
-var nlcb = require('./lottoplus/nlcb.js');
-var mongo = require('./lottoplus/mongo.js');
-var errors = require('./lib/errors.js');
+const lottoplus = require('./lottoplus/nlcb.js');
 
-var lottoplus = {
-  nlcb: nlcb,
-  mongo: mongo
+module.exports = {
+  lottoplus: lottoplus
 };
-
-exports.lottoplus = lottoplus;
-exports.errors = errors;
