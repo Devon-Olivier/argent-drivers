@@ -1,7 +1,7 @@
 {
   "name": "argent-drivers",
-  "version": "2.1.2",
-  "description": "Drivers to lottoplus database stores.",
+  "version": "3.0.0",
+  "description": "A collection of scrapers for retrieving results of games at nlcb.co.tt.",
   "main": "argent-drivers.js",
   "scripts": {
     "test": "NODE_ENV=dev mocha"
