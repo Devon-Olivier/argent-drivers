@@ -30,7 +30,7 @@ const ERROR = require('./error-names.js');
  *  DRAW STRING OF 22_Nov-12. The '_' is the inconsistency here.
  **/
 var parse = function parse(html) {
-  var drawh2Regexp = /<h2.*?Draw.*?Winners.*?\d+/;
+  var drawh2Regexp = /<h2[\s\S]*?Draw[\s\S]*?Winners[\s\S]*?\d+/;
   var drawNumberRegexp = /Draw\s*#.*?(\d+)/;
   var drawDateRegexp = /Date.*?(\d{1,2}).*?([a-zA-Z]{3}).*?(\d{2}).*?Numbers/;
   var numbersDrawnRegexp = /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/;
@@ -42,8 +42,8 @@ var parse = function parse(html) {
   const h2match = html.match(drawh2Regexp);
   var h2;
   if(h2match === null){
-    debugError('Found no draw in any h2 tag of html: \n');
-    const error = new Error('Found no draw in any h2 tag of html: \n', html);
+    debugError('Found no draw in any h2 tag of html: %s\n', html);
+    const error = new Error('Found no draw in any h2 tag of html: \n');
     error.name = ERROR.NODRAW;
     throw error;
   }
@@ -84,7 +84,7 @@ var parse = function parse(html) {
     throw new Error("Couldn't parse numbers drawn from h2:\n", h2);
   }
   draw.numbersDrawn = numbersDrawnMatch.slice(1,7).map(function(n) {
-    return +n
+    return +n;
   });
 
   var jackpotMatch = h2.match(jackpotRegexp);

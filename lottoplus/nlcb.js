@@ -38,13 +38,15 @@ const MAKETABLE = require('./table.js').makeTable;
  **/
 
 /**
- * requestHtml: options -> promise
+ * requestHtml: options -> Promise
  * make http request and return a promise for the html sent back. Options
  * specified in @param options.
  *
  * TODO: improve the documentation of the options parameter
  * @param options an object with properties corresponding to the host, path, 
  * query string, port, http verb, headers etc. for the request. 
+ * @return Promise for a string containing the raw html specified by options
+ * @api private
  **/
 const requestHtml = function requestHtml(options) {
   return new Promise(function (resolve, reject) {
@@ -139,9 +141,8 @@ var installNlcbGet = function installNlcbGet(table) {
   };
   STORE(table, 'date', getDate);
 
-  // TODO: try do implement this. As of 1st August 2015
-  //       nlcb.co.tt has broken query for dates and is
-  //       also very slow in http response.
+  // TODO: As of 1st August 2015 nlcb.co.tt has broken query
+  //       for dates and is also very slow in http response.
   //       Check for example, getDraw(new Date("2015 1 1")
   /**
    * getDateRange: Date-range -> promise
@@ -191,7 +192,6 @@ var installNlcbGet = function installNlcbGet(table) {
 };
 const getTable = MAKETABLE(); 
 installNlcbGet(getTable);
-
 
 /**
  * DrawProperty is any one of the following types:
