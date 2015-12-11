@@ -1,69 +1,56 @@
+#TODO: UPDATE README
+
 #argent-drivers
 
-Drivers to lottoplus database stores.
+NLCB game results scrapers.
 
-##Install dependencies
+##Installation 
 
-depends on [node.js](http://nodejs.org)
+Install [node.js](https://nodejs.org)
 
-##Install argent-drivers
-  `argent-drivers` is in the npm repository. To install
-  
-  `$ npm install argent-drivers`
-  
-  This is the recommended way to install `argent-drivers`.
+`argent-drivers` is in the npm repository. To install
 
-  You can also get `argent-drivers` from [github.com](https://www.github.com)
+`$ npm install argent-drivers`
 
-  `git clone https://github.com/Devon-Olivier/argent-drivers.git` to get `argent-drivers`
+This is the recommended way to install `argent-drivers`.
 
-  `$ npm install` in the root of the repository installs the node modules 
-  dependencies.
+You can also get `argent-drivers` from [github.com](https://www.github.com)
+
+`git clone https://github.com/Devon-Olivier/argent-drivers.git` to get `argent-drivers`
+
+`$ npm install` in the root of the repository installs the node modules 
+dependencies.
 
 ##Usage
 
-The lottoplus drivers
+###The lottoplus scraper
 ```js
 var lottoplusDrivers = require('argent-drivers').lottoplus;
 ```
-
-### `.lottoplus.nlcb`
 Scrapes nlcb.co.tt for lottoplus draws.
 
-#### `.getDraw(drawProperty)`
-
-DrawProperty is any one of the following types:
- number
- string
- Date
- object (with `start` and `end` properties of the previous types)
+#### `.getDraw(DrawProperty)`
 
 getDraw: DrawProperty -> promise
 Consume a DrawProperty of a set of draws return a promise for those draws
 specified by the DrawProperty.
 
-If the DrawProperty is numeric return a promise for the draw with that number
-property.
+DrawProperty is any one of the following types:
+number
+Date
+RangeObject: {start: <Date>, end: <Date>} or {start: <number>, end: <number>}
 
-If the DrawProperty is an object with properties `start` and `end`, which are
-numeric, return a promise for an array of Draws whose number property is
-in the range \[start, end).
-
-If the DrawProperty is a string that is coerceable to a Date, return a promise
-for the draw with that date property.
-
-If the DrawProperty is an object with properties `start` and `end`, that are
-both coerceable to a Date, return a promise for an array of Draws whose date
-property is in the range \[Date(start), Date(end)).
-
-else produce TypeError on property
+If the DrawProperty is a number return a promise for the draw with that number
+If the DrawProperty is a Date, return a promise for the draw on that date.
+If the DrawProperty is a RangeObject then return a promise for an array of
+draws in [RangeObject.start, RangeObject.end);
 
 Get draw of a given date:
 
 The following prints the draw for 1 December, 2012.
 ```js
 #! /usr/bin/env node
-var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
+var lottoNlcb = require('argent-drivers').lottoplus;
 lottoNlcb.getDraw('2012 12 1').then(console.log, console.error);
 ```
 
@@ -72,7 +59,7 @@ Get draws in given date-range:
 The following prints all draws in December 2012.
 ```js
 #! /usr/bin/env node
-var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
+var lottoNlcb = require('argent-drivers').lottoplus;
 
 var range = {
   start: '2012 12 1',
@@ -86,7 +73,7 @@ Get draw of a given number:
 The following prints the first lottoplus draw ever.
 ```js
 #! /usr/bin/env node
-var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
+var lottoNlcb = require('argent-drivers').lottoplus;
 
 lottoNlcb.getDraw(1).then(console.log, console.error);
 ```
@@ -95,7 +82,7 @@ Get draws in given number-range:
 The following prints draws with numbers from 1 to 10 inclusive.
 ```js
 #! /usr/bin/env node
-var lottoNlcb = require('argent-drivers').lottoplus.nlcb;
+var lottoNlcb = require('argent-drivers').lottoplus;
 
 var range = {
   start: 1, 
@@ -104,38 +91,8 @@ var range = {
 
 lottoNlcb.getDraw(range).then(console.log, console.error);
 ```
-#### `.getNewJackpot()`
-getNewJackpot: -> promise for a number
+### `.getNextDraw()`
 
-Return a promise for the latest jackpot from nlcb.co.tt
+getNextDraw: undefined -> Promise for the next Draw
 
-### `.lottoplus.mongo`
-Stores and retrieves draws from a mongo database.
-
-```js
-var lottoMongo = require('argent-drivers').lottoplus.mongo;
-```
-#### `.getDraw(drawProperty)`
-
-The getDraw method of the mongo driver is identical to the nlcb driver. See above for
-details.
-
-#### `.getNewJackpot()`
-getNewJackpot: -> promise for a number
-
-Return a promise for the latest jackpot from nlcb.co.tt. The promised number may
-the value null if the database does not have a jackpot stored.
-
-#### `.saveNewJackpot(jackpot)`
-saveNewJackopt: number -> promise (for unspecified value)
-
-Update mongo with new jackpot from nlcb.co.tt.
-
-#### `.saveDraw(draws)`
-
-Store draws in the lottoplus mongo database.
-
-## .errors
-
-The errors passed to callbacks shall be of one of these found in
-`require('argent-drivers').errors` or one of the native Error objects.
+Returns a Promise for the next draw to be played. The `numbersPlayed` and `numberOfWinners` properties are undefined.
