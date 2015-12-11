@@ -1,5 +1,3 @@
-#TODO: UPDATE README
-
 #argent-drivers
 
 NLCB game results scrapers.
@@ -14,12 +12,11 @@ Install [node.js](https://nodejs.org)
 
 This is the recommended way to install `argent-drivers`.
 
-You can also get `argent-drivers` from [github.com](https://www.github.com)
+You can also get `argent-drivers` from [github.com](https://github.com/Devon-Olivier/argent-drivers)
 
 `git clone https://github.com/Devon-Olivier/argent-drivers.git` to get `argent-drivers`
 
-`$ npm install` in the root of the repository installs the node modules 
-dependencies.
+`$ npm install` in the root of the repository installs the node modules dependencies.
 
 ##Usage
 
@@ -32,6 +29,7 @@ Scrapes nlcb.co.tt for lottoplus draws.
 #### `.getDraw(DrawProperty)`
 
 getDraw: DrawProperty -> promise
+
 Consume a DrawProperty of a set of draws return a promise for those draws
 specified by the DrawProperty.
 
@@ -43,12 +41,12 @@ DrawProperty is any one of the following types:
  * {start: < Date >, end: < Date >} or
  * {start: < number >, end: < number >}
 
-If the DrawProperty is a number return a promise for the draw with that number
+If the DrawProperty is a number return a promise for the draw with that number.
 If the DrawProperty is a Date, return a promise for the draw on that date.
-If the DrawProperty is a RangeObject then return a promise for an array of
-draws in [RangeObject.start, RangeObject.end);
+If the DrawProperty is a RangeObject then return a promise for an array of draws
+in [RangeObject.start, RangeObject.end);
 
-Get draw of a given date:
+##### Examples
 
 The following prints the draw for 1 December, 2012.
 ```js
@@ -56,8 +54,6 @@ The following prints the draw for 1 December, 2012.
 var lottoNlcb = require('argent-drivers').lottoplus;
 lottoNlcb.getDraw('2012 12 1').then(console.log, console.error);
 ```
-
-Get draws in given date-range:
 
 The following prints all draws in December 2012.
 ```js
@@ -71,7 +67,6 @@ var range = {
 
 lottoNlcb.getDraw(range).then(console.log, console.error);
 ```
-Get draw of a given number:
 
 The following prints the first lottoplus draw ever.
 ```js
@@ -80,7 +75,6 @@ var lottoNlcb = require('argent-drivers').lottoplus;
 
 lottoNlcb.getDraw(1).then(console.log, console.error);
 ```
-Get draws in given number-range:
 
 The following prints draws with numbers from 1 to 10 inclusive.
 ```js
@@ -94,7 +88,7 @@ var range = {
 
 lottoNlcb.getDraw(range).then(console.log, console.error);
 ```
-### `.getNextDraw()`
+#### `.getNextDraw()`
 
 getNextDraw: undefined -> Promise for the next Draw
 
