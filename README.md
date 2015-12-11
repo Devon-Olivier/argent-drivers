@@ -36,9 +36,11 @@ Consume a DrawProperty of a set of draws return a promise for those draws
 specified by the DrawProperty.
 
 DrawProperty is any one of the following types:
-number
-Date
-RangeObject: {start: <Date>, end: <Date>} or {start: <number>, end: <number>}
+1. number
+2. Date
+3. RangeObject: 
+  * {start: <Date>, end: <Date>} or
+  * {start: <number>, end: <number>}
 
 If the DrawProperty is a number return a promise for the draw with that number
 If the DrawProperty is a Date, return a promise for the draw on that date.
