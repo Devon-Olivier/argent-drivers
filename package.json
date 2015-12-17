@@ -22,7 +22,7 @@
     "olivier"
   ],
   "author": "Devon Olivier",
-  "license": "GPLv3",
+  "license": "GPL-3.0",
   "readmeFilename": "README.md",
   "dependencies": {
     "lodash": "^3.10.0",
