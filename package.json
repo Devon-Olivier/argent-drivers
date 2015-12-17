@@ -22,7 +22,7 @@
     "olivier"
   ],
   "author": "Devon Olivier",
-  "license": "BSD",
+  "license": "GPLv3",
   "readmeFilename": "README.md",
   "dependencies": {
     "lodash": "^3.10.0",
