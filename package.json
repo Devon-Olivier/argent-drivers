@@ -27,10 +27,10 @@
   "dependencies": {
     "lodash": "^3.10.0",
     "moment": "^2.10.3",
-    "mongodb": "^2.0.39",
     "twix": "^0.6.4"
   },
   "devDependencies": {
+    "mocha": "^2.3.4",
     "should": "^7.0.2",
     "should-promised": "^0.3.0"
   }
