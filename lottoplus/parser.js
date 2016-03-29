@@ -29,13 +29,13 @@ const ERROR = require('./error-names.js');
  *  NOTE: THE RETURNED HTML FROM NLCB IS INCONSISTENT. DRAW NUMBER 1393 HAS A
  *  DRAW STRING OF 22_Nov-12. The '_' is the inconsistency here.
  **/
-var parse = function parse(html) {
-  var drawh2Regexp = /<h2[\s\S]*?Draw[\s\S]*?Winners[\s\S]*?\d+/;
-  var drawNumberRegexp = /Draw\s*#.*?(\d+)/;
-  var drawDateRegexp = /Date.*?(\d{1,2}).*?([a-zA-Z]{3}).*?(\d{2}).*?Numbers/;
-  var numbersDrawnRegexp = /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/;
-  var jackpotRegexp = /Jackpot.*?(\d+(\.\d{2})?)/;
-  var winnersRegexp = /Winners.*?(\d+)/;
+const parse = function parse(html) {
+  const drawh2Regexp = /<h2[\s\S]*?Draw[\s\S]*?Winners[\s\S]*?\d+/;
+  const drawNumberRegexp = /Draw\s*#.*?(\d+)/;
+  const drawDateRegexp = /Date.*?(\d{1,2}).*?([a-zA-Z]{3}).*?(\d{2}).*?Numbers/;
+  const numbersDrawnRegexp = /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/;
+  const jackpotRegexp = /Jackpot.*?(\d+(\.\d{2})?)/;
+  const winnersRegexp = /Winners.*?(\d+)/;
 
   const draw = {};
 
@@ -54,13 +54,13 @@ var parse = function parse(html) {
     debugLog('h2: ', h2);
   }
 
-  var drawNumberMatch = h2.match(drawNumberRegexp);
+  const drawNumberMatch = h2.match(drawNumberRegexp);
   if(drawNumberMatch === null) {
     throw new Error("Couldn't parse draw number from h2:\n", h2);
   }
   draw.drawNumber = +drawNumberMatch[1]; 
 
-  var drawDateMatch = h2.match(drawDateRegexp);
+  const drawDateMatch = h2.match(drawDateRegexp);
   if(drawDateMatch === null) {
     throw new Error("Couldn't parse draw Date from h2:\n", h2);
   }
@@ -79,7 +79,7 @@ var parse = function parse(html) {
     debugLog('drawDate: ', draw.drawDate);
   }
 
-  var numbersDrawnMatch = h2.match(numbersDrawnRegexp);
+  const numbersDrawnMatch = h2.match(numbersDrawnRegexp);
   if(numbersDrawnMatch === null) {
     throw new Error("Couldn't parse numbers drawn from h2:\n", h2);
   }
@@ -87,7 +87,7 @@ var parse = function parse(html) {
     return +n;
   });
 
-  var jackpotMatch = h2.match(jackpotRegexp);
+  const jackpotMatch = h2.match(jackpotRegexp);
   if(jackpotMatch === null) {
     debugLog('jackpot match attempt: ', jackpotMatch);
     throw new Error("Couldn't parse draw jackpot from h2:\n", h2);
@@ -96,7 +96,7 @@ var parse = function parse(html) {
     draw.jackpot = +jackpotMatch[1];
   }
 
-  var numberOfWinnersMatch = h2.match(winnersRegexp);
+  const numberOfWinnersMatch = h2.match(winnersRegexp);
   if(numberOfWinnersMatch === null) {
     throw new Error("Couldn't parse draw number of winners from h2:\n", h2);
   }
@@ -105,8 +105,8 @@ var parse = function parse(html) {
   return draw;
 };
 
-var debugLog = function () {};
-var debugError = function () {};
+const debugLog = function () {};
+const debugError = function () {};
 module.exports = function(debug) {
   if(debug) {
     debugLog = console.log.bind(console);
