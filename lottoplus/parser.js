@@ -30,16 +30,18 @@ const ERROR = require('./error-names.js');
  *  DRAW STRING OF 22_Nov-12. The '_' is the inconsistency here.
  **/
 const parse = function parse(html) {
-  const drawh2Regexp = /<h2[\s\S]*?Draw[\s\S]*?Winners[\s\S]*?\d+/;
-  const drawNumberRegexp = /Draw\s*#.*?(\d+)/;
-  const drawDateRegexp = /Date.*?(\d{1,2}).*?([a-zA-Z]{3}).*?(\d{2}).*?Numbers/;
-  const numbersDrawnRegexp = /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/;
-  const jackpotRegexp = /Jackpot.*?(\d+(\.\d{2})?)/;
-  const winnersRegexp = /Winners.*?(\d+)/;
+  const regExps = {
+    h2: /<h2[\s\S]*?Draw[\s\S]*?Winners[\s\S]*?\d+/, //for finding the h2 containing the draw
+    number: /Draw\s*#.*?(\d+)/, //for finding the draw number within the h2 containing the draw
+    date: /Date.*?(\d{1,2}).*?([a-zA-Z]{3}).*?(\d{2}).*?Numbers/, //for finding the date within the h2 containing the draw
+    numbers: /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/, //for finding the date within the h2 containing the draw
+    jackpot: /Jackpot.*?(\d+(\.\d{2})?)/, //for finding the jackpot within the h2 containing the draw
+    winners: /Winners.*?(\d+)/ //for finding the number of winners within h2 containing the draw
+  };
 
   const draw = {};
 
-  const h2match = html.match(drawh2Regexp);
+  const h2match = html.match(regExps.h2);
   var h2;
   if(h2match === null){
     debugError('Found no draw in any h2 tag of html: %s\n', html);
@@ -54,13 +56,13 @@ const parse = function parse(html) {
     debugLog('h2: ', h2);
   }
 
-  const drawNumberMatch = h2.match(drawNumberRegexp);
+  const drawNumberMatch = h2.match(regExps.number);
   if(drawNumberMatch === null) {
     throw new Error("Couldn't parse draw number from h2:\n", h2);
   }
   draw.drawNumber = +drawNumberMatch[1]; 
 
-  const drawDateMatch = h2.match(drawDateRegexp);
+  const drawDateMatch = h2.match(regExps.date);
   if(drawDateMatch === null) {
     throw new Error("Couldn't parse draw Date from h2:\n", h2);
   }
@@ -79,7 +81,7 @@ const parse = function parse(html) {
     debugLog('drawDate: ', draw.drawDate);
   }
 
-  const numbersDrawnMatch = h2.match(numbersDrawnRegexp);
+  const numbersDrawnMatch = h2.match(regExps.numbers);
   if(numbersDrawnMatch === null) {
     throw new Error("Couldn't parse numbers drawn from h2:\n", h2);
   }
@@ -87,7 +89,7 @@ const parse = function parse(html) {
     return +n;
   });
 
-  const jackpotMatch = h2.match(jackpotRegexp);
+  const jackpotMatch = h2.match(regExps.jackpot);
   if(jackpotMatch === null) {
     debugLog('jackpot match attempt: ', jackpotMatch);
     throw new Error("Couldn't parse draw jackpot from h2:\n", h2);
@@ -96,7 +98,7 @@ const parse = function parse(html) {
     draw.jackpot = +jackpotMatch[1];
   }
 
-  const numberOfWinnersMatch = h2.match(winnersRegexp);
+  const numberOfWinnersMatch = h2.match(regExps.winners);
   if(numberOfWinnersMatch === null) {
     throw new Error("Couldn't parse draw number of winners from h2:\n", h2);
   }
