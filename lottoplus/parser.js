@@ -42,69 +42,69 @@ const parse = function parse(html) {
   const draw = {};
 
   const h2match = html.match(regExps.h2);
-  var h2;
   if(h2match === null){
-    debugError('Found no draw in any h2 tag of html: %s\n', html);
+    debugError(`Found no draw in any h2 tag of html: ${html}`);
     const error = new Error('Found no draw in any h2 tag of html: \n');
     error.name = ERROR.NODRAW;
     throw error;
   }
   else {
     debugLog('matched an h2 with a draw');
-    debugLog('match object: ', h2match);
-    h2 = h2match[0];
-    debugLog('h2: ', h2);
+    debugLog(`match object: ${h2match}`);
+    const h2 = h2match[0];
+    debugLog(`h2: ${h2}`);
+
+    const drawNumberMatch = h2.match(regExps.number);
+    if(drawNumberMatch === null) {
+      throw new Error(`Couldn't parse draw number from h2:\n${h2}`);
+    }
+    draw.drawNumber = +drawNumberMatch[1]; 
+
+    const drawDateMatch = h2.match(regExps.date);
+    if(drawDateMatch === null) {
+      throw new Error(`Couldn't parse draw Date from h2:\n${h2}`);
+    }
+    else {
+      debugLog('matched a date in h2');
+      debugLog(`match object: ${drawDateMatch}`);
+      const year = drawDateMatch[3];
+      debugLog(`drawYear: ${year}`);
+      const month = drawDateMatch[2];
+      debugLog(`drawMonth: ${month}`);
+      const day = drawDateMatch[1];
+      debugLog(`drawDay: ${ day }`);
+      const dateString = `${year} ${month} ${day}`
+      debugLog(`date: ${year} ${month} ${day}`);
+      draw.drawDate = MOMENT(dateString, 'YY MMM DD', 'en').toDate();
+      debugLog(`drawDate: ${ draw.drawDate }`);
+    }
+
+    const numbersDrawnMatch = h2.match(regExps.numbers);
+    if(numbersDrawnMatch === null) {
+      throw new Error(`Couldn't parse numbers drawn from h2:\n${h2}`);
+    }
+    draw.numbersDrawn = numbersDrawnMatch.slice(1,7).map(function(n) {
+      return +n;
+    });
+
+    const jackpotMatch = h2.match(regExps.jackpot);
+    if(jackpotMatch === null) {
+      debugLog(`jackpot match attempt: ${jackpotMatch}`, jackpotMatch);
+      throw new Error(`Couldn't parse draw jackpot from h2:\n${h2}`);
+    }
+    else {
+      draw.jackpot = +jackpotMatch[1];
+    }
+
+    const numberOfWinnersMatch = h2.match(regExps.winners);
+    if(numberOfWinnersMatch === null) {
+      throw new Error(`Couldn't parse draw number of winners from h2:\n${h2}`);
+    }
+    draw.numberOfWinners = +numberOfWinnersMatch[1];
+
+    return draw;
   }
 
-  const drawNumberMatch = h2.match(regExps.number);
-  if(drawNumberMatch === null) {
-    throw new Error("Couldn't parse draw number from h2:\n", h2);
-  }
-  draw.drawNumber = +drawNumberMatch[1]; 
-
-  const drawDateMatch = h2.match(regExps.date);
-  if(drawDateMatch === null) {
-    throw new Error("Couldn't parse draw Date from h2:\n", h2);
-  }
-  else {
-    debugLog('matched a date in h2');
-    debugLog('match object: ', drawDateMatch);
-    const year = drawDateMatch[3];
-    debugLog('drawYear: ', year);
-    const month = drawDateMatch[2];
-    debugLog('drawMonth: ', month);
-    const day = drawDateMatch[1];
-    debugLog('drawDay: ', day);
-    const dateString = year + ' ' + month + ' ' + day;
-    debugLog('date: ', dateString);
-    draw.drawDate = MOMENT(dateString, 'YY MMM DD', 'en').toDate();
-    debugLog('drawDate: ', draw.drawDate);
-  }
-
-  const numbersDrawnMatch = h2.match(regExps.numbers);
-  if(numbersDrawnMatch === null) {
-    throw new Error("Couldn't parse numbers drawn from h2:\n", h2);
-  }
-  draw.numbersDrawn = numbersDrawnMatch.slice(1,7).map(function(n) {
-    return +n;
-  });
-
-  const jackpotMatch = h2.match(regExps.jackpot);
-  if(jackpotMatch === null) {
-    debugLog('jackpot match attempt: ', jackpotMatch);
-    throw new Error("Couldn't parse draw jackpot from h2:\n", h2);
-  }
-  else {
-    draw.jackpot = +jackpotMatch[1];
-  }
-
-  const numberOfWinnersMatch = h2.match(regExps.winners);
-  if(numberOfWinnersMatch === null) {
-    throw new Error("Couldn't parse draw number of winners from h2:\n", h2);
-  }
-  draw.numberOfWinners = +numberOfWinnersMatch[1];
-
-  return draw;
 };
 
 const debugLog = function () {};
