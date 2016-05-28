@@ -1,16 +1,14 @@
 "use strict";
-var makeTable = function makeTable() {
-  return {};
-};
 
-var retrieve = function retrieve(table, type) {
-  return table[type];
-};
+module.exports = class Table {
+  constructor() {
+  }
 
-var store = function store(table, type, f) {
-  table[type] = f;
-};
+  retrieve (type){
+    return this[type];
+  }
 
-exports.makeTable = makeTable;
-exports.retrieve = retrieve;
-exports.store = store;
+  store (type, f) {
+    this[type] = f;
+  }
+};

@@ -22,9 +22,7 @@ const TYPE = require('./type.js');
 const ERRORNAMES = require('./error-names.js');
 const NLCBCONF = require('../config/nlcb-conf.json');
 const PARSE = require ('./parser.js').parse;
-const STORE = require('./table.js').store;
-const RETRIEVE = require('./table.js').retrieve;
-const MAKETABLE = require('./table.js').makeTable;
+const Table = require('./table.js');
 /** 
  * a Draw is an Object with the following properties
  * drawNumber:  the draw number
@@ -90,7 +88,7 @@ const installNlcbGet = function installNlcbGet(table) {
 
     return requestHtml(options).then(PARSE);
   };
-  STORE(table, 'number', getNumber);
+  table.store('number', getNumber);
 
   /**
    * getNumberRange: Number-range bePersistent -> promise
@@ -113,7 +111,7 @@ const installNlcbGet = function installNlcbGet(table) {
         );
     return Promise.all(promiseArray);
   };
-  STORE(table, 'number-range', getNumberList);
+  table.store( 'number-range', getNumberList);
 
   /**
    * getDate: Date -> promise
@@ -139,7 +137,7 @@ const installNlcbGet = function installNlcbGet(table) {
 
     return requestHtml(options).then(PARSE);
   };
-  STORE(table, 'date', getDate);
+  table.store( 'date', getDate);
 
   // TODO: As of 1st August 2015 nlcb.co.tt has broken query
   //       for dates and is also very slow in http response.
@@ -188,10 +186,10 @@ const installNlcbGet = function installNlcbGet(table) {
         });
       });
   };
-  STORE(table, 'date-range', getDateList);
+  table.store( 'date-range', getDateList);
 };
-const getTable = MAKETABLE(); 
-installNlcbGet(getTable);
+const table = new Table;
+installNlcbGet(table);
 
 /**
  * DrawProperty is any one of the following types:
@@ -215,7 +213,7 @@ const getDraw = function getDraw(property) {
     return Promise.reject(new Error('dont understand type of ', property));
   }
 
-  const getter = RETRIEVE(getTable, type);
+  const getter = table.retrieve(type);
   if(getter === undefined) {
     return Promise.reject(new Error("cannot get draw for this type of" +
           " draw property: " + property));
@@ -229,17 +227,16 @@ const getNextDraw = function getNextDraw() {
   //TODO: put this in parser.js?
   const parseJackpot = function parseJackpot(html) {
     debugLog('in parseJackpot of getNextDraw');
-    const jackpot;
     const jackpotH1Regexp = /<h1.*?headfit.*?((\d+?,)+?(\d+)\s*?\.\d{2})/;
     const jackpotMatch = html.match(jackpotH1Regexp);
     if(jackpotMatch === null) {
       throw new Error('cannot parse jackpot in ' + html);
     }
     else {
-      jackpot = +jackpotMatch[1].replace(/,/g,'');
+      const jackpot = +jackpotMatch[1].replace(/,/g,'');
       debugLog('match jackpot: ', jackpot);
+      return jackpot;
     }
-    return jackpot;
   };
 
   const parseDate = function parseDate(html) {
@@ -346,8 +343,8 @@ const getNextDraw = function getNextDraw() {
   });
 };
 
-const debugLog = function () {};
-const debugError = function () {};
+var debugLog = function () {};
+var debugError = function () {};
 module.exports = function(debug) {
   if(debug) {
     debugLog = console.log.bind(console);
