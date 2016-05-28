@@ -89,7 +89,7 @@ const parse = function parse(html) {
 
     const jackpotMatch = h2.match(regExps.jackpot);
     if(jackpotMatch === null) {
-      debugLog(`jackpot match attempt: ${jackpotMatch}`, jackpotMatch);
+      debugLog(`jackpot match attempt: ${jackpotMatch}`);
       throw new Error(`Couldn't parse draw jackpot from h2:\n${h2}`);
     }
     else {

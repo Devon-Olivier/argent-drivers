@@ -230,11 +230,11 @@ const getNextDraw = function getNextDraw() {
     const jackpotH1Regexp = /<h1.*?headfit.*?((\d+?,)+?(\d+)\s*?\.\d{2})/;
     const jackpotMatch = html.match(jackpotH1Regexp);
     if(jackpotMatch === null) {
-      throw new Error('cannot parse jackpot in ' + html);
+      throw new Error(`cannot parse jackpot in ${html}`);
     }
     else {
       const jackpot = +jackpotMatch[1].replace(/,/g,'');
-      debugLog('match jackpot: ', jackpot);
+      debugLog(`match jackpot: ${jackpot}`);
       return jackpot;
     }
   };
@@ -250,13 +250,13 @@ const getNextDraw = function getNextDraw() {
     else {
       //debugLog('match date: ', dateMatch);
       const year = dateMatch[3];
-      debugLog('drawYear: ', year);
+      debugLog(`drawYear: ${year}`);
       const month = dateMatch[2];
-      debugLog('drawMonth: ', month);
+      debugLog(`drawMonth: ${month}`);
       const day = dateMatch[1];
-      debugLog('drawDay: ', day);
-      const dateString = year + ' ' + month + ' ' + day;
-      debugLog('dateString: ', dateString);
+      debugLog(`drawDay: ${day}`);
+      const dateString = `${ year } ${ month } ${  day }`;
+      debugLog(`dateString: ${dateString}`);
 
       const lastDrawDate = MOMENT(dateString, 'YY MMM D', 'en').toDate();
       const satOfDrawWeek = MOMENT(lastDrawDate).day(6).toDate();
@@ -268,8 +268,8 @@ const getNextDraw = function getNextDraw() {
       else { 
         date = satOfDrawWeek;
       }
-      debugLog('last draw date: ', lastDrawDate);
-      debugLog('next draw date: ', date);
+      debugLog(`last draw date: ${lastDrawDate}`);
+      debugLog(`next draw date: ${date}`);
     }
     return date;
   };
@@ -281,11 +281,11 @@ const getNextDraw = function getNextDraw() {
     const numberMatch = html.match(numberRegexp);
     //debugLog('parseNumber: ', numberMatch);
     if(numberMatch === null) {
-      throw new Error('cannot parse number in ' + html);
+      throw new Error(`cannot parse number in ${html}`);
     }
     else {
       number = +numberMatch[1] + 1;
-      debugLog('number: ', number);
+      debugLog(`number: ${number}`);
     }
     return number;
   };
