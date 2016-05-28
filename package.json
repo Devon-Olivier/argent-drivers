@@ -2,7 +2,7 @@
   "name": "argent-drivers",
   "version": "3.0.2",
   "description": "A collection of scrapers for retrieving results of games at nlcb.co.tt.",
-  "main": "argent-drivers.js",
+  "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=dev mocha"
   },
