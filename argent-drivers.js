@@ -1,4 +1,4 @@
-const lottoplus = require('./lottoplus/nlcb.js');
+const lottoplus = require('./lottoplus');
 
 module.exports = {
   lottoplus: lottoplus
