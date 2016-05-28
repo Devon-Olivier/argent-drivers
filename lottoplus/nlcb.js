@@ -70,7 +70,7 @@ const requestHtml = function requestHtml(options) {
   });
 };
 
-var installNlcbGet = function installNlcbGet(table) {
+const installNlcbGet = function installNlcbGet(table) {
 
   /**
    * getNumber: number -> promise
@@ -78,8 +78,8 @@ var installNlcbGet = function installNlcbGet(table) {
    * a number property corresponding to that number.
    * @param number a draw number
    **/
-  var getNumber = function getNumber(number) {
-    var options = {
+  const getNumber = function getNumber(number) {
+    const options = {
       host: NLCBCONF.host,
       port: NLCBCONF.port,
       method: NLCBCONF.method,
@@ -98,7 +98,7 @@ var installNlcbGet = function installNlcbGet(table) {
    * Number, return a promise for an array of Draws whose date property 
    * is in the range [start, end).
    **/
-  var getNumberList = function getNumberList(numberRange) {
+  const getNumberList = function getNumberList(numberRange) {
     const rangeArray = LODASH.range(numberRange.start, numberRange.end);
     const promiseArray = rangeArray.map(
         function(number) {
@@ -120,15 +120,15 @@ var installNlcbGet = function installNlcbGet(table) {
    * Consume a Date and returns a promise for the draw with a that date
    * @param date representing a draw date;
    **/
-  var getDate = function getDate(date) {
-    var moment = MOMENT(date);
-    var queryObject = {
+  const getDate = function getDate(date) {
+    const moment = MOMENT(date);
+    const queryObject = {
       day: moment.format('DD'),
       month: moment.format('MMM'),
       year: moment.format('YY')
     };
 
-    var options = {
+    const options = {
       host: NLCBCONF.host,
       port: NLCBCONF.port,
       method: NLCBCONF.method,
@@ -152,14 +152,14 @@ var installNlcbGet = function installNlcbGet(table) {
    **/
   //helper for getDateRange. twix doesn't seem to return a standard
   //javascript iterator.
-  var mapIterator = function mapIterator (f, iterator) {
+  const mapIterator = function mapIterator (f, iterator) {
     const array = [];
     while(iterator.hasNext()) {
       array.push(f(iterator.next()));
     }
     return array;
   };
-  var getDateList = function getDateList (dateRange) {
+  const getDateList = function getDateList (dateRange) {
     const startMoment = MOMENT(dateRange.start);
     const endMoment = MOMENT(dateRange.end);
     endMoment.subtract(1, 'days');
@@ -208,14 +208,14 @@ installNlcbGet(getTable);
  * If the DrawProperty is a RangeObject then return a promise for an array of
  * draws in [RangeObject.start, RangeObject.end);
  **/
-var getDraw = function getDraw(property) {
+const getDraw = function getDraw(property) {
   //idea taken from GENERIC OPERATOR discussions in SICP
-  var type = TYPE(property);
+  const type = TYPE(property);
   if(!type) {
     return Promise.reject(new Error('dont understand type of ', property));
   }
 
-  var getter = RETRIEVE(getTable, type);
+  const getter = RETRIEVE(getTable, type);
   if(getter === undefined) {
     return Promise.reject(new Error("cannot get draw for this type of" +
           " draw property: " + property));
@@ -229,7 +229,7 @@ const getNextDraw = function getNextDraw() {
   //TODO: put this in parser.js?
   const parseJackpot = function parseJackpot(html) {
     debugLog('in parseJackpot of getNextDraw');
-    var jackpot;
+    const jackpot;
     const jackpotH1Regexp = /<h1.*?headfit.*?((\d+?,)+?(\d+)\s*?\.\d{2})/;
     const jackpotMatch = html.match(jackpotH1Regexp);
     if(jackpotMatch === null) {
@@ -346,8 +346,8 @@ const getNextDraw = function getNextDraw() {
   });
 };
 
-var debugLog = function () {};
-var debugError = function () {};
+const debugLog = function () {};
+const debugError = function () {};
 module.exports = function(debug) {
   if(debug) {
     debugLog = console.log.bind(console);
