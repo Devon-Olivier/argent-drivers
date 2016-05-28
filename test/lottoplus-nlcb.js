@@ -1,5 +1,5 @@
 "use strict";
-var nlcbLottoplusDriver = require('../lottoplus/nlcb')(true);
+var nlcbLottoplusDriver = require('../lottoplus')(true);
 var MOMENT = require('moment');
 var SHOULD = require('should');
 require('should-promised');
