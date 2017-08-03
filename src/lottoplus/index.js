@@ -1,13 +1,11 @@
-/************************************************************
- * File: nlcb.js
- * Author: Devon Olivier
- * Year: 2015
- * Purpose: Manages connections and read requests to the lottoplus
+/**
+ * @author: Devon Olivier
+ * @file: Manages connections and read requests to the lottoplus
  * nlcb database at nlcb.co.tt
- * Platform: iojs
- ***********************************************************/
+ */
+
 //TODO: IMPROVE ERROR REPORTING AND DETECTING
-'use strict';
+
 //native node modules
 const HTTP = require('http');
 const QUERYSTRING = require('querystring');
@@ -20,7 +18,7 @@ const LODASH = require('lodash');
 //native argent modules
 const TYPE = require('./type.js');
 const ERRORNAMES = require('./error-names.js');
-const NLCBCONF = require('../config/nlcb-conf.json');
+const NLCBCONF = require('../../config/nlcb-conf.json');
 const PARSE = require ('./parser.js').parse;
 const Table = require('./table.js');
 /** 
