@@ -27,7 +27,8 @@
   "dependencies": {
     "lodash": "^3.10.0",
     "moment": "^2.10.3",
-    "twix": "^0.6.4"
+    "twix": "^0.6.4",
+    "winston": "^2.2.0"
   },
   "devDependencies": {
     "mocha": "^2.3.4",
