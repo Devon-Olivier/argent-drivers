@@ -112,37 +112,23 @@ const installNlcbGet = function installNlcbGet(table) {
    * Dates, return a promise for an array of Draws whose date property 
    * is in the range [start, end).
    **/
-  //helper for getDateRange. twix doesn't seem to return a standard
-  //javascript iterator.
-  const mapIterator = function mapIterator (f, iterator) {
-    const array = [];
-    while(iterator.hasNext()) {
-      array.push(f(iterator.next()));
-    }
-    return array;
-  };
   const getDateList = function getDateList (dateRange) {
     const startMoment = MOMENT(dateRange.start);
     const endMoment = MOMENT(dateRange.end);
-    endMoment.subtract(1, 'days');
+    endMoment.subtract(1, 'days');//mutating endMoment :(
     const twixDateRange = startMoment.twix(endMoment);
-    const twixDateRangeIterator = twixDateRange.iterate('days');
-    const dateArray = mapIterator(function(moment) {
-      return moment.toDate();
-    }, twixDateRangeIterator);
-
-    const promiseArray = dateArray.map(
-        function(date) {
-          return getDate(date)
-            .catch(function (error) {
-              //if there is no draw reported just put null for that
-              //draw instead of letting all of them fail
-              if(error.name === ERRORNAMES.NODRAW) {
-                return null;
-              }
-              throw error;
-            });
+    const dateArray = twixDateRange.toArray('days');
+    const promiseArray = dateArray.map(function(date) {
+      return getDate(date)
+        .catch(function (error) {
+          //if there is no draw reported just put null for that
+          //draw instead of letting all of them fail
+          if(error.name === ERRORNAMES.NODRAW) {
+            return null;
+          }
+          throw error;
         });
+    });
     return Promise.all(promiseArray)
       .then(function(draws){
         return draws.filter(function(draw){
