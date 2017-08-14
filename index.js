@@ -1,5 +1,3 @@
-const lottoplus = require('./lottoplus');
-
 module.exports = {
-  lottoplus: lottoplus
+  lottoplus: require('./src/lottoplus')
 };

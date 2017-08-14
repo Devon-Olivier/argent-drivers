@@ -7,6 +7,7 @@
 //TODO: IMPROVE ERROR REPORTING AND DETECTING
 
 //native node modules
+const URL = require('url');
 const HTTP = require('http');
 const QUERYSTRING = require('querystring');
 
@@ -14,6 +15,7 @@ const QUERYSTRING = require('querystring');
 const MOMENT = require('moment');
 require('twix');
 const LODASH = require('lodash');
+const REQUEST = require('request-promise-native');
 
 //native argent modules
 const TYPE = require('./type.js');
@@ -32,40 +34,6 @@ const Table = require('./table.js');
  * numberOfWinners: a number representing the number of 
  *                  winners for the draw
  **/
-
-/**
- * requestHtml: options -> Promise
- * make http request and return a promise for the html sent back. Options
- * specified in @param options.
- *
- * TODO: improve the documentation of the options parameter
- * @param options an object with properties corresponding to the host, path, 
- * query string, port, http verb, headers etc. for the request. 
- * @return Promise for a string containing the raw html specified by options
- * @api private
- **/
-const requestHtml = function requestHtml(options) {
-  return new Promise(function (resolve, reject) {
-    const httpRequest = HTTP.request(options, function (res) {
-      var html = "";
-      res.setEncoding('utf8');
-      res.on('data', function (chunk) {
-        html += chunk;
-      });
-
-      res.on('end', function () {
-        resolve(html);
-      });
-    });
-
-    httpRequest.on('error', function (e) {
-      reject(e);
-    });
-
-    httpRequest.end(options.queryString);
-  });
-};
-
 const installNlcbGet = function installNlcbGet(table) {
 
   /**
@@ -75,16 +43,17 @@ const installNlcbGet = function installNlcbGet(table) {
    * @param number a draw number
    **/
   const getNumber = function getNumber(number) {
-    const options = {
+    const urlObject = {
+      protocol: NLCBCONF.protocol,
       host: NLCBCONF.host,
-      port: NLCBCONF.port,
-      method: NLCBCONF.method,
-      headers: NLCBCONF.headers,
-      path: NLCBCONF.getDrawNumberPath,
-      queryString: QUERYSTRING.stringify({drawnum: number})
+      pathname: NLCBCONF.getDrawNumberPath,//TODO: change confg to "...PathName"
     };
-
-    return requestHtml(options).then(PARSE);
+    const url = URL.format(urlObject);
+    return REQUEST.post(url, {
+      form: {
+        drawnum: number
+      }
+    }).then(PARSE);
   };
   table.store('number', getNumber);
 
@@ -123,17 +92,14 @@ const installNlcbGet = function installNlcbGet(table) {
       month: moment.format('MMM'),
       year: moment.format('YY')
     };
-
-    const options = {
+    const urlObject = {
+      protocol: NLCBCONF.protocol,
       host: NLCBCONF.host,
-      port: NLCBCONF.port,
-      method: NLCBCONF.method,
-      headers: NLCBCONF.headers,
-      path:  NLCBCONF.getDrawDatePath,
-      queryString: QUERYSTRING.stringify(queryObject)
+      pathname: NLCBCONF.getDrawDatePath,//TODO: change "confg...getDrawDatePath" to "...PathName"
     };
-
-    return requestHtml(options).then(PARSE);
+    const url = URL.format(urlObject);
+    //console.log(`url: ${url}`);
+    return REQUEST.post(url, {form: queryObject}).then(PARSE);
   };
   table.store( 'date', getDate);
 
