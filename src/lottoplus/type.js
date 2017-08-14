@@ -10,7 +10,7 @@ module.exports = function type (value) {
 
   //number-range?
   if(typeof value.start === 'number' && typeof value.end === 'number') {
-    return 'number-range';
+    return 'numberRange';
   }
 
   //date?
@@ -18,9 +18,9 @@ module.exports = function type (value) {
     return 'date';
   }
 
-  //date-range
+  //date-range?
   if(value.start instanceof Date && value.end instanceof Date) {
-    return 'date-range';
+    return 'dateRange';
   }
 
   //deliberately return undefined as unknown type

@@ -34,112 +34,106 @@ const Table = require('./table.js');
  * numberOfWinners: a number representing the number of 
  *                  winners for the draw
  **/
-const installNlcbGet = function installNlcbGet(table) {
-
-  /**
-   * getNumber: number -> promise
-   * Consume a number and returns a promise for the draw with
-   * a number property corresponding to that number.
-   * @param number a draw number
-   **/
-  const getNumber = function getNumber(number) {
-    const urlObject = {
-      protocol: NLCBCONF.protocol,
-      host: NLCBCONF.host,
-      pathname: NLCBCONF.getDrawNumberPath,//TODO: change confg to "...PathName"
-    };
-    const url = URL.format(urlObject);
-    return REQUEST.post(url, {
-      form: {
-        drawnum: number
-      }
-    }).then(PARSE);
+const get = {};
+/**
+ * getNumber: number -> promise
+ * Consume a number and returns a promise for the draw with
+ * a number property corresponding to that number.
+ * @param number a draw number
+ **/
+get.number = function getNumber(number) {
+  const urlObject = {
+    protocol: NLCBCONF.protocol,
+    host: NLCBCONF.host,
+    pathname: NLCBCONF.getDrawNumberPath,
   };
-  table.store('number', getNumber);
-
-  /**
-   * getNumberRange: Number-range bePersistent -> promise
-   * Consumes an Object with properties 'start' and 'end', that are
-   * Number, return a promise for an array of Draws whose date property 
-   * is in the range [start, end).
-   **/
-  const getNumberList = function getNumberList(numberRange) {
-    const rangeArray = LODASH.range(numberRange.start, numberRange.end);
-    const promiseArray = rangeArray.map(
-        function(number) {
-          return getNumber(number).catch(function (error) {
-            //if there is no draw reported just put null for that
-            //draw instead of letting all of them fail
-            if(error.name === ERRORNAMES.NODRAW) {
-              return null;
-            }
-            throw error;
-          });}
-        );
-    return Promise.all(promiseArray);
-  };
-  table.store( 'number-range', getNumberList);
-
-  /**
-   * getDate: Date -> promise
-   * Consume a Date and returns a promise for the draw with a that date
-   * @param date representing a draw date;
-   **/
-  const getDate = function getDate(date) {
-    const moment = MOMENT(date);
-    const queryObject = {
-      day: moment.format('DD'),
-      month: moment.format('MMM'),
-      year: moment.format('YY')
-    };
-    const urlObject = {
-      protocol: NLCBCONF.protocol,
-      host: NLCBCONF.host,
-      pathname: NLCBCONF.getDrawDatePath,//TODO: change "confg...getDrawDatePath" to "...PathName"
-    };
-    const url = URL.format(urlObject);
-    //console.log(`url: ${url}`);
-    return REQUEST.post(url, {form: queryObject}).then(PARSE);
-  };
-  table.store( 'date', getDate);
-
-  // TODO: As of 1st August 2015 nlcb.co.tt has broken query
-  //       for dates and is also very slow in http response.
-  //       Check for example, getDraw(new Date("2015 1 1")
-  /**
-   * getDateRange: Date-range -> promise
-   * Consumes an Object with properties 'start' and 'end', that are
-   * Dates, return a promise for an array of Draws whose date property 
-   * is in the range [start, end).
-   **/
-  const getDateList = function getDateList (dateRange) {
-    const startMoment = MOMENT(dateRange.start);
-    const endMoment = MOMENT(dateRange.end);
-    endMoment.subtract(1, 'days');//mutating endMoment :(
-    const twixDateRange = startMoment.twix(endMoment);
-    const dateArray = twixDateRange.toArray('days');
-    const promiseArray = dateArray.map(function(date) {
-      return getDate(date)
-        .catch(function (error) {
-          //if there is no draw reported just put null for that
-          //draw instead of letting all of them fail
-          if(error.name === ERRORNAMES.NODRAW) {
-            return null;
-          }
-          throw error;
-        });
-    });
-    return Promise.all(promiseArray)
-      .then(function(draws){
-        return draws.filter(function(draw){
-          return draw !== null;
-        });
-      });
-  };
-  table.store( 'date-range', getDateList);
+  const url = URL.format(urlObject);
+  return REQUEST.post(url, {
+    form: {
+      drawnum: number
+    }
+  }).then(PARSE);
 };
-const table = new Table;
-installNlcbGet(table);
+
+/**
+ * getNumberRange: Number-range bePersistent -> promise
+ * Consumes an Object with properties 'start' and 'end', that are
+ * Number, return a promise for an array of Draws whose date property 
+ * is in the range [start, end).
+ **/
+get.numberRange = function getNumberRange(numberRange) {
+  const rangeArray = LODASH.range(numberRange.start, numberRange.end);
+  const promiseArray = rangeArray.map(
+    function(number) {
+      return get.number(number).catch(function (error) {
+        //if there is no draw reported just put null for that
+        //draw instead of letting all of them fail
+        if(error.name === ERRORNAMES.NODRAW) {
+          return null;
+        }
+        throw error;
+      });}
+  );
+  return Promise.all(promiseArray);
+};
+
+// TODO: As of 1st August 2015 nlcb.co.tt has broken query
+//       for dates and is also very slow in http response.
+//       Check for example, getDraw(new Date("2015 1 1")
+/**
+ * getDate: Date -> promise
+ * Consume a Date and returns a promise for the draw with a that date
+ * @param date representing a draw date;
+ **/
+get.date = function getDate(date) {
+  const moment = MOMENT(date);
+  const queryObject = {
+    day: moment.format('DD'),
+    month: moment.format('MMM'),
+    year: moment.format('YY')
+  };
+  const urlObject = {
+    protocol: NLCBCONF.protocol,
+    host: NLCBCONF.host,
+    pathname: NLCBCONF.getDrawDatePath,//TODO: change "confg...getDrawDatePath" to "...PathName"
+  };
+  const url = URL.format(urlObject);
+  return REQUEST.post(url, {form: queryObject}).then(PARSE);
+};
+
+/**
+ * getDateRange: Date-range -> promise
+ * Consumes an Object with properties 'start' and 'end', that are
+ * Dates, return a promise for an array of Draws whose date property 
+ * is in the range [start, end).
+ **/
+get.dateRange = function getDateList (dateRange) {
+  const startMoment = MOMENT(dateRange.start);
+  const endMoment = MOMENT(dateRange.end);
+  endMoment.subtract(1, 'days');//mutating endMoment :(
+  const twixDateRange = startMoment.twix(endMoment);
+  const dateArray = twixDateRange.toArray('days');
+  const promiseArray = dateArray.map(function(date) {
+    return get.date(date)
+      .catch(function (error) {
+        //TODO: this causes the bad effect that some draws are left
+        //out of the results without reporting this fact to the user
+        
+        //if there is no draw reported just put null for that
+        //draw instead of letting all of them fail
+        if(error.name === ERRORNAMES.NODRAW) {
+          return null;
+        }
+        throw error;
+      });
+  });
+  return Promise.all(promiseArray)
+    .then(function(draws){
+      return draws.filter(function(draw){
+        return draw !== null;
+      });
+    });
+};
 
 /**
  * DrawProperty is any one of the following types:
@@ -162,13 +156,7 @@ const getDraw = function getDraw(property) {
   if(!type) {
     return Promise.reject(new Error('dont understand type of ', property));
   }
-
-  const getter = table.retrieve(type);
-  if(getter === undefined) {
-    return Promise.reject(new Error("cannot get draw for this type of" +
-          " draw property: " + property));
-  }
-  return getter(property);
+  return get[type](property);
 };
 
 
