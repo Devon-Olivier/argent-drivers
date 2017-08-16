@@ -206,73 +206,56 @@ const getNextDraw = function getNextDraw() {
       else { 
         date = satOfDrawWeek;
       }
-      debugLog(`last draw date: ${lastDrawDate}`);
-      debugLog(`next draw date: ${date}`);
+      //console.log(`last draw date: ${lastDrawDate}`);
+      //console.log(`next draw date: ${date}`);
     }
     return date;
   };
 
   const parseNumber = function parseNumber(html) {
-    debugLog('in parseNumber of getNextDraw');
+    //console.log('in parseNumber of getNextDraw');
     var number;
     const numberRegexp = /Lotto[\S\s]*?Plus[\S\s]*?Date[\s\S]*?Draw[\S\s]*?#[\s\S]*?>(\d+)/;
     const numberMatch = html.match(numberRegexp);
-    //debugLog('parseNumber: ', numberMatch);
+    //console.log('parseNumber: ', numberMatch);
     if(numberMatch === null) {
       throw new Error(`cannot parse number in ${html}`);
     }
     else {
       number = +numberMatch[1] + 1;
-      debugLog(`number: ${number}`);
+      //console.log(`number: ${number}`);
     }
     return number;
   };
 
-//TODO: use high level http client "request" or "superagent"
-  const jackpotOptions = {
+  const numberUrlObject = {
+    protocol: NLCBCONF.protocol,
     host: NLCBCONF.host,
-    port: NLCBCONF.port,
-    method: 'GET',//TODO: store this in config?
-    headers: NLCBCONF.headers,
-    path: NLCBCONF.getNextJackpotPath
+    pathname: NLCBCONF.getNextDrawNumberPath
   };
+  const numberUrl = URL.format(numberUrlObject);
 
-  const numberOptions = {
+  const dateUrlObject = {
+    protocol: NLCBCONF.protocol,
     host: NLCBCONF.host,
-    port: NLCBCONF.port,
-    method: 'GET',//TODO: store this in config?
-    headers: NLCBCONF.headers,
-    path: NLCBCONF.getNextDrawNumberPath
+    pathname: NLCBCONF.getNextDrawDatePath
   };
+  const dateUrl = URL.format(dateUrlObject);
 
-  const dateOptions = {
+  const jackpotUrlObject = {
+    protocol: NLCBCONF.protocol,
     host: NLCBCONF.host,
-    port: NLCBCONF.port,
-    method: 'GET',//TODO: store this in config?
-    headers: NLCBCONF.headers,
-    path: NLCBCONF.getNextDrawDatePath
+    pathname: NLCBCONF.getNextJackpotPath
   };
-
+  const jackpotUrl = URL.format(jackpotUrlObject);
+  
   const promises = [
-    requestHtml(numberOptions).then(function(html) {
-      return parseNumber(html);
-    }).catch(function(error){
-      debugLog(error);
-      throw error;
-    }),
-    requestHtml(dateOptions).then(function(html) {
-      return parseDate(html);
-    }).catch(function(error){
-      debugLog(error);
-      throw error;
-    }),
-    requestHtml(jackpotOptions).then(function(html) {
-      return parseJackpot(html);
-    }).catch(function(error) {
-      debugLog(error);
-    })
+    REQUEST.get(numberUrl).then(parseNumber),
+    REQUEST.get(dateUrl).then(parseDate),
+    REQUEST.get(jackpotUrl).then(parseJackpot)
   ];
   return Promise.all(promises).then(function(arr) {
+    //console.log('all promises returned');
     return {
       drawNumber: arr[0],
       drawDate: arr[1],
