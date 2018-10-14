@@ -15,7 +15,19 @@ require('twix'); // TODO: try moment-range.js
 const nlcbConf = require('../../config/nlcb-conf.json');
 const { parse } = require('./parser.js');
 
-/*
+/**
+ * a Draw is an Object with the following properties
+ * drawNumber:  the draw number
+ * drawDate: Date object representing the date for this draw
+ * numbersDrawn: an array of numbers played for this draw such
+ *               that numbersDrawn[5] is the powerball of the
+ *               draw
+ * drawjackpot: number representing the jackpot for this draw
+ * numberOfWinners: a number representing the number of
+ *                  winners for the draw
+ */
+
+/**
  * lottoFetch: Object(formData) Object(urlObject) -> Promise
  * Make a request to nlcb.co.tt
  *
@@ -28,7 +40,7 @@ const { parse } = require('./parser.js');
  *
  * @return a promise for the html response from nlcb.co.tt
  */
-const lottoFetch = async (formData, urlObject) => {
+const lottoFetch = async function lottoFetch(formData, urlObject) {
   const lottoUrl = url.format(urlObject);
 
   const response = await fetch(lottoUrl, {
@@ -40,18 +52,6 @@ const lottoFetch = async (formData, urlObject) => {
   const text = await response.text();
   return parse(text);
 };
-
-/**
- * a Draw is an Object with the following properties
- * drawNumber:  the draw number
- * drawDate: Date object representing the date for this draw
- * numbersDrawn: an array of numbers played for this draw such
- *               that numbersDrawn[5] is the powerball of the
- *               draw
- * drawjackpot: number representing the jackpot for this draw
- * numberOfWinners: a number representing the number of
- *                  winners for the draw
- */
 
 /**
  * number: number -> promise
@@ -74,7 +74,7 @@ const number = async function number(n) {
 
 // TODO: As of 1st August 2015 nlcb.co.tt has broken query
 //       for dates and is also very slow in http response.
-//       Check for example, draw(new Date("2015 1 1")
+//       Check for example, date(new Date("2015 1 1")
 /**
  * date: Date -> promise
  * Consume a Date and returns a promise for the draw with a that date
