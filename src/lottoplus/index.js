@@ -87,7 +87,6 @@ const date = async function date(d) {
     month: momentDate.format('MMM'),
     year: momentDate.format('YY'),
   };
-  console.dir(formData);
   const urlObject = {
     protocol: nlcbConf.protocol,
     host: nlcbConf.host,
