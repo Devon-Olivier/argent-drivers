@@ -31,11 +31,11 @@ const { parse } = require('./parser.js');
  * lottoFetch: Object(formData) Object(urlObject) -> Promise
  * Make a request to nlcb.co.tt
  *
- * @param formData is an Object whose key-value pairs are the
+ * @param {Object} formData is an Object whose key-value pairs are the
  * key-value pairs for an http request of content type
  * application/x-www-form-urlencoded.
  *
- * @param urlObject is an Object whose key-value pairs specify the
+ * @param urlObject {Object} is an Object whose key-value pairs specify the
  * url at nlcb.co.tt to make the request
  *
  * @return a promise for the html response from nlcb.co.tt
@@ -83,10 +83,11 @@ const number = async function number(n) {
 const date = async function date(d) {
   const momentDate = moment(d);
   const formData = {
-    day: momentDate.format('DD'),
+    day: momentDate.format('D'), // nlcb prefers '2018 9 8' to '2018 9 08'
     month: momentDate.format('MMM'),
     year: momentDate.format('YY'),
   };
+  console.dir(formData);
   const urlObject = {
     protocol: nlcbConf.protocol,
     host: nlcbConf.host,
