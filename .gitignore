@@ -2,6 +2,6 @@
 *sw*
 *.lock
 /node_modules
-.jshintrc
+.eslintrc.js
 .directory
 npm-debug.log

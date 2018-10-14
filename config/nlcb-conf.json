@@ -7,9 +7,9 @@
     "Content-Type": "application/x-www-form-urlencoded",
     "Connection": "keep-alive"
   },
-  "getDrawNumberPath": "/app/index.php/lpresults/lpdrawnum",
-  "getDrawDatePath": "/app/index.php/lpresults/lpdatesch",
-  "getNextJackpotPath": "/app/index.php/results/grandprize/",
-  "getNextDrawNumberPath": "/app/index.php/allresultscon",
-  "getNextDrawDatePath": "/app/index.php/allresultscon"
+  "drawNumberPathname": "/app/index.php/lpresults/lpdrawnum",
+  "drawDatePathname": "/app/index.php/lpresults/lpdatesch",
+  "nextJackpotPathname": "/app/index.php/results/grandprize/",
+  "nextDrawNumberPathname": "/app/index.php/allresultscon",
+  "nextDrawDatePathname": "/app/index.php/allresultscon"
 } 
