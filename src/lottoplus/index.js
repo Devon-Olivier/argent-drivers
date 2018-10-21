@@ -13,7 +13,7 @@ const url = require('url');
 require('twix'); // TODO: try moment-range.js
 
 const nlcbConf = require('../../config/nlcb-conf.json');
-const { parse } = require('./parser.js');
+const parse = require('./parser.js');
 
 /**
  * a Draw is an Object with the following properties
@@ -35,8 +35,8 @@ const { parse } = require('./parser.js');
  * key-value pairs for an http request of content type
  * application/x-www-form-urlencoded.
  *
- * @param urlObject {Object} is an Object whose key-value pairs specify the
- * url at nlcb.co.tt to make the request
+ * @param {Object} urlObject {Object} is an Object whose key-value
+ * pairs specify the url at nlcb.co.tt to make the request
  *
  * @return a promise for the html response from nlcb.co.tt
  */
@@ -72,9 +72,18 @@ const number = async function number(n) {
   return lottoFetch(formData, urlObject);
 };
 
-// TODO: As of 1st August 2015 nlcb.co.tt has broken query
-//       for dates and is also very slow in http response.
-//       Check for example, date(new Date("2015 1 1")
+/*  TODO: As of 1st August 2015 nlcb.co.tt has broken query
+       for dates and is also very slow in http response.
+       Check for example, date(new Date("2015 1 1")
+
+ *  NOTE: THE RETURNED HTML FROM NLCB IS INCONSISTENT. DRAW NUMBER 1393 HAS A
+ *  DRAW STRING OF 22_Nov-12. The '_' is the inconsistency here.
+ *
+ *  NOTE: DRAW FOR DATE 2018 09 05 RETURNS THE DRAW FOR DATE 2018 09 15
+ *
+ *  NOTE: Draw # 1782 is not returning any draws
+ */
+
 /**
  * date: Date -> promise
  * Consume a Date and returns a promise for the draw with a that date
