@@ -1,11 +1,13 @@
-const MOMENT = require('moment');
-const WINSTON = require('winston');
+const moment = require('moment');
+const winston = require('winston');
 
-const LOGGER = WINSTON.createLogger({
+// TODO Improve error reporting and detection
+// TODO Clean up code?
+const logger = winston.createLogger({
   transports: [
-    new WINSTON.transports.Console({
+    new winston.transports.Console({
       colorize: true,
-      format: WINSTON.format.simple(),
+      format: winston.format.simple(),
     }),
   ],
 });
@@ -41,7 +43,7 @@ const LOGGER = WINSTON.createLogger({
  *  NOTE: THE RETURNED HTML FROM NLCB IS INCONSISTENT. DRAW NUMBER 1393 HAS A
  *  DRAW STRING OF 22_Nov-12. The '_' is the inconsistency here.
  *
- *  NOTE: DRAW FOR DATE 2018 09 05 RETURNS THE DRAW FOR DATE 2018 09 05
+ *  NOTE: DRAW FOR DATE 2018 09 05 RETURNS THE DRAW FOR DATE 2018 09 15
  *
  *  NOTE: Draw # 1782 is not returning any draws
  */
@@ -61,62 +63,69 @@ const parse = function parse(html) {
   if (h2match === null) {
     // const errorMsg = `Found no draw in any h2 tag of html: ${html}`;
     const errorMsg = 'Found no draw in any h2 tag of html:';
-    LOGGER.error(errorMsg);
+    // logger.error(errorMsg);
     const error = new Error(errorMsg);
     throw error;
   } else {
-    LOGGER.info('matched an h2 with a draw');
-    LOGGER.info(`match object: ${h2match}`);
+    // logger.info('matched an h2 with a draw');
+    // logger.info(`match object: ${h2match}`);
     const h2 = h2match[0];
-    LOGGER.info(`h2: ${h2}`);
+    // logger.info(`h2: ${h2}`);
 
+    // Parse Number
     const drawNumberMatch = h2.match(regExps.number);
     if (drawNumberMatch === null) {
       throw new Error(`Couldn't parse draw number from h2:\n${h2}`);
+    } else {
+      draw.drawNumber = +drawNumberMatch[1];
     }
-    draw.drawNumber = +drawNumberMatch[1];
 
+    // Parse Date
     const drawDateMatch = h2.match(regExps.date);
     if (drawDateMatch === null) {
       throw new Error(`Couldn't parse draw Date from h2:\n${h2}`);
     } else {
-      LOGGER.info('matched a date in h2');
-      LOGGER.info(`match object: ${drawDateMatch}`);
+      // logger.info('matched a date in h2');
+      // logger.info(`match object: ${drawDateMatch}`);
       const year = drawDateMatch[3];
-      LOGGER.info(`drawYear: ${year}`);
+      // logger.info(`drawYear: ${year}`);
       const month = drawDateMatch[2];
-      LOGGER.info(`drawMonth: ${month}`);
+      // logger.info(`drawMonth: ${month}`);
       const day = drawDateMatch[1];
-      LOGGER.info(`drawDay: ${day}`);
+      // logger.info(`drawDay: ${day}`);
       const dateString = `${year} ${month} ${day}`;
-      LOGGER.info(`date: ${year} ${month} ${day}`);
-      draw.drawDate = MOMENT(dateString, 'YY MMM DD', 'en').toDate();
-      LOGGER.info(`drawDate: ${draw.drawDate}`);
+      // logger.info(`date: ${year} ${month} ${day}`);
+      draw.drawDate = moment(dateString, 'YY MMM DD', 'en').toDate();
+      // logger.info(`drawDate: ${draw.drawDate}`);
     }
 
+    // Parse Number List
     const numbersDrawnMatch = h2.match(regExps.numbers);
     if (numbersDrawnMatch === null) {
       throw new Error(`Couldn't parse numbers drawn from h2:\n${h2}`);
+    } else {
+      draw.numbersDrawn = numbersDrawnMatch.slice(1, 7).map(n => +n);
     }
-    draw.numbersDrawn = numbersDrawnMatch.slice(1, 7).map(n => +n);
 
+    // Parse Jackpot
     const jackpotMatch = h2.match(regExps.jackpot);
     if (jackpotMatch === null) {
-      LOGGER.info(`jackpot match attempt: ${jackpotMatch}`);
+      // logger.info(`jackpot match attempt: ${jackpotMatch}`);
       throw new Error(`Couldn't parse draw jackpot from h2:\n${h2}`);
     } else {
       draw.jackpot = +jackpotMatch[1];
     }
 
+    // Parse  Number of Winner
     const numberOfWinnersMatch = h2.match(regExps.winners);
     if (numberOfWinnersMatch === null) {
       throw new Error(`Couldn't parse draw number of winners from h2:\n${h2}`);
+    } else {
+      draw.numberOfWinners = +numberOfWinnersMatch[1];
     }
-    draw.numberOfWinners = +numberOfWinnersMatch[1];
 
     return draw;
   }
 };
 
-// TODO: export function not object
-module.exports.parse = parse;
+module.exports = parse;
