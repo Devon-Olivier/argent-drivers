@@ -57,7 +57,7 @@ const lottoFetch = async function lottoFetch(formData, urlObject) {
  * number: number -> promise
  * Consume a number and returns a promise for the draw with
  * a number property corresponding to that number.
- * @param number a draw number
+ * @param {number} a draw number
  */
 const number = async function number(n) {
   const formData = {
@@ -86,8 +86,8 @@ const number = async function number(n) {
 
 /**
  * date: Date -> promise
- * Consume a Date and returns a promise for the draw with a that date
- * @param date representing a draw date;
+ * Consume a Date and returns a promise for the draw for that date
+ * @param {Date} representing a draw date;
  */
 const date = async function date(d) {
   const momentDate = moment(d);
