@@ -1,14 +1,14 @@
-#argent-drivers
+# argent-drivers
 
 NLCB game results scrapers.
 
-##Installation 
+## Installation 
 
 `$ npm install argent-drivers`
 
-##Usage
+## Usage
 
-###The lottoplus scraper
+### The lottoplus scraper
 ```js
 const {lottoplus} = require('argent-drivers');
 ```
