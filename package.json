@@ -1,6 +1,6 @@
 {
   "name": "argent-drivers",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "A collection of scrapers for retrieving results of games at nlcb.co.tt.",
   "main": "index.js",
   "scripts": {
