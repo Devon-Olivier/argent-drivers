@@ -50,11 +50,11 @@ const logger = winston.createLogger({
 const parse = function parse(html) {
   const regExps = {
     h2: /<h2[\s\S]*?Draw[\s\S]*?Winners[\s\S]*?\d+/,
-    number: /Draw\s*#.*?(\d+)/,
-    date: /Date.*?(\d{1,2}).*?([a-zA-Z]{3}).*?(\d{2}).*?Numbers/,
-    numbers: /Drawn.*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+).*?(\d+)/,
-    jackpot: /Jackpot.*?(\d+(\.\d{2})?)/,
-    winners: /Winners.*?(\d+)/,
+    number: /Draw\s*#[\s\S]*?(\d+)/,
+    date: /Date[\s\S]*?(\d{1,2})[\s\S]*?([a-zA-Z]{3})[\s\S]*?(\d{2})[\s\S]*?Numbers/,
+    numbers: /Drawn[\s\S]*?(\d+)[\s\S]*?(\d+)[\s\S]*?(\d+)[\s\S]*?(\d+)[\s\S]*?(\d+)[\s\S]*?(\d+)/,
+    jackpot: /Jackpot[\s\S]*?(\d+(\.\d{2})?)/,
+    winners: /Winners[\s\S]*?(\d+)/,
   };
 
   const draw = {};
